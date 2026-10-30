@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 public class BoardService {
     public record Card(String key, String title, String type, String srKind, String processId, String priority, String severity, String assigneeId,
                        Integer storyPoints, String column, String activeStage, boolean inReview, boolean readyToMove, int gatesDone, int gatesTotal,
-                       List<String> labels, int bugs, int reworkCount, String sprintId) { }
+                       List<String> labels, int bugs, int reworkCount, String sprintId, double rank) { }
     public record ColumnView(String column, int wipLimit, int count, boolean overLimit, List<Card> cards) { }
     public record Approval(String key, String title, String type, String stageId, String gate, String stageName, Instant submittedAt, String submittedBy, String accountableRole) { }
 
@@ -60,7 +60,7 @@ public class BoardService {
         boolean ready = next != null && missingFor(w, next).isEmpty();
         int done = (int) applicable.stream().filter(s -> s.status == Status.APPROVED).count();
         return new Card(w.key, w.title, w.type.name(), w.srKind == null ? null : w.srKind.name(), w.processId, w.priority, w.severity, w.assigneeId,
-            w.storyPoints, w.column.name(), active, inReview, ready, done, applicable.size(), w.labels, w.bugs.size(), w.reworkCount, w.sprintId);
+            w.storyPoints, w.column.name(), active, inReview, ready, done, applicable.size(), w.labels, w.bugs.size(), w.reworkCount, w.sprintId, w.rank);
     }
 
     /** Stages that must be approved (or not applicable) before a card may enter the target column. */

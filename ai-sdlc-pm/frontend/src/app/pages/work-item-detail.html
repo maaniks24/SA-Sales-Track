@@ -1,0 +1,343 @@
+@if (w(); as w) {
+<div class="page">
+  <div class="crumbs small"><a routerLink="/board">Board</a> › <a routerLink="/work-items">Work items</a> › {{ w.key }}</div>
+  <div class="page-head">
+    <div class="head">
+      <div class="row">
+        <span class="badge" [class]="'type-' + w.type">{{ typeLabel[wtKey(w)] }}</span>
+        <h1>{{ w.key }} · {{ w.title }}</h1>
+      </div>
+      <div class="row small meta">
+        @if (w.processId) { <span class="mono" data-tip="Process ID used in commits, documents and Bugzilla">{{ w.processId }}</span> }
+        <span>Column <b>{{ human(w.column) }}</b></span>
+        <span>Module <b>{{ w.module || '—' }}</b></span>
+        <span>Priority <span class="badge" [class]="tone(w.priority)">{{ human(w.priority) }}</span></span>
+        @if (w.severity) { <span>Severity <span class="badge" [class]="tone(w.severity)">{{ w.severity }}</span></span> }
+        @if (w.crClass) { <span>CR class <b>{{ w.crClass }}</b></span> }
+        <span>Assignee <b>{{ ctx.userName(w.assigneeId) }}</b></span>
+        @if (w.storyPoints) { <span><b>{{ w.storyPoints }}</b> pts</span> }
+        @if (w.reworkCount) { <span class="badge serious" data-tip="Gate rejections and backward moves">Rework {{ w.reworkCount }}</span> }
+        @if (w.missedGate) { <span class="badge serious" data-tip="Gate that should have caught this defect (from the RCA)">Escaped {{ w.missedGate }}</span> }
+      </div>
+    </div>
+    <button class="btn" (click)="openEdit()">Edit details</button>
+  </div>
+  @if (w.description) { <p class="desc">{{ w.description }}</p> }
+
+  <!-- stage stepper -->
+  <nav class="stepper" aria-label="Process stages">
+    @for (x of stageList(); track x.d.id) {
+      <button class="step" [class]="x.s?.status" [class.sel]="selected() === x.d.id" (click)="select(x.d.id)"
+              [attr.data-tip]="x.d.name + ' — ' + statusLabel[x.s?.status ?? 'NOT_STARTED']">
+        <span class="g">{{ x.d.gate }}</span>
+        <span class="n">{{ x.d.short }}</span>
+        <span class="s">{{ x.s?.status === 'APPROVED' ? '✓' : x.s?.status === 'SKIPPED' ? '–' : x.s?.status === 'IN_REVIEW' ? '⧗' : x.s?.status === 'IN_PROGRESS' ? '●' : '' }}</span>
+      </button>
+    }
+  </nav>
+
+  <div class="tabs" role="tablist">
+    <button [class.active]="tab() === 'stage'" (click)="tab.set('stage')">Stage {{ selected() }}</button>
+    <button [class.active]="tab() === 'code'" (click)="tab.set('code')">Code & CI ({{ w.pullRequests.length }} PR · {{ w.builds.length }} builds)</button>
+    <button [class.active]="tab() === 'bugs'" (click)="tab.set('bugs')">Bugzilla ({{ w.bugs.length }})</button>
+    <button [class.active]="tab() === 'reqs'" (click)="tab.set('reqs')">Requirements ({{ w.requirementIds.length }})</button>
+    <button [class.active]="tab() === 'activity'" (click)="tab.set('activity')">Activity</button>
+  </div>
+
+  @switch (tab()) {
+  @case ('stage') {
+  @if (def(); as d) { @if (st(); as s) {
+  <div class="stage-grid">
+    <div class="stack">
+      <section class="card">
+        <div class="card-head">
+          <h2>{{ d.id }} {{ d.name }} <span class="badge" [class]="statusTone[s.status]">{{ statusLabel[s.status] }}</span></h2>
+          <div class="row">
+            @if (s.status === 'NOT_STARTED') { <button class="btn primary sm" (click)="start()" [disabled]="busy()">Start stage</button> }
+            @if (auth.has('ARCHITECT', 'TECH_LEAD') && s.status !== 'APPROVED' && s.status !== 'IN_REVIEW') {
+              @if (s.status === 'SKIPPED') { <button class="btn sm" (click)="skip.open = true">Make applicable</button> }
+              @else if (s.applicability !== 'FULL') { <button class="btn sm" (click)="skip.open = true">Mark not applicable</button> }
+            }
+          </div>
+        </div>
+        <p>{{ d.purpose }}</p>
+        <div class="row small">
+          <span>Responsible <b>{{ roleLabel[d.responsibleRole] }}</b></span>
+          <span>Accountable <b>{{ roleLabel[d.accountableRole] }}</b> <span class="tip" data-tip="Only this role can approve the gate">?</span></span>
+          <span>Applicability <span class="badge">{{ s.applicability }}</span></span>
+          @if (s.startedAt) { <span class="muted">Started {{ s.startedAt | date: 'd MMM' }}</span> }
+        </div>
+        @if (s.skipReason) { <div class="callout small">Not applicable: {{ s.skipReason }}</div> }
+        <div class="callout small airule"><b>AI rule.</b> {{ d.aiRule }}</div>
+        @if (skip.open) {
+          <div class="inline-form">
+            <label class="field">Reason (recorded in the audit log) <textarea [(ngModel)]="skip.reason" placeholder="Why this stage does or does not apply"></textarea></label>
+            <div class="row"><button class="btn sm" (click)="skip.open = false">Cancel</button>
+              <button class="btn primary sm" [disabled]="skip.reason.trim().length < 10" (click)="setApplicable(s.status === 'SKIPPED')">Confirm</button></div>
+          </div>
+        }
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h3>Inputs <span class="tip" data-tip="What this stage needs. Documents produced by earlier stages are linked at their latest version.">?</span></h3></div>
+        <table class="data compact">
+          <thead><tr><th>Input</th><th>Source</th><th>Mode</th></tr></thead>
+          <tbody>@for (i of d.inputs; track $index) { <tr><td>{{ i.item }}</td><td class="small">{{ i.source }}</td><td><span class="badge">{{ i.mode }}</span></td></tr> }</tbody>
+        </table>
+        @if (stageInputs().length) {
+          <h4>From earlier stages</h4>
+          @for (i of stageInputs(); track i.templateId) {
+            <div class="docline">
+              <span class="mono">{{ i.templateId }}</span><span class="grow">{{ i.templateName }}</span>
+              @if (i.source; as src) {
+                <span class="badge" [class.good]="src.baselined">v{{ src.currentVersion }}{{ src.baselined ? ' baseline' : ' draft' }}</span>
+                <span class="small muted">{{ src.stageId }}</span>
+                <button class="btn sm" (click)="download(src, src.currentVersion)">Download</button>
+              } @else { <span class="badge warning">Not produced yet</span> }
+            </div>
+          }
+        }
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h3>Review checklist <span class="muted small">{{ checkedCount() }} / {{ s.checklist.length }}</span></h3>
+          @if (!editable()) { <span class="small muted">Editable while the stage is in progress</span> }</div>
+        <ul class="checklist">
+          @for (c of s.checklist; track c.index) {
+            <li [class.done]="c.checked">
+              <label><input type="checkbox" [checked]="c.checked" [disabled]="!editable() || busy()" (change)="toggleCheck(c.index, !c.checked)"> <span>{{ c.text }}</span></label>
+              @if (c.checked) { <span class="small muted by">✓ {{ ctx.userName(c.checkedBy) }} · {{ c.checkedAt | date: 'd MMM HH:mm' }}{{ c.evidence ? ' · ' + c.evidence : '' }}</span> }
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h3>Outputs & documents</h3>
+          <span class="small muted">Upload adds a minor version (0.1, 0.2…); baseline makes it 1.0 and counts for the gate.</span></div>
+        <table class="data compact">
+          <thead><tr><th>Expected output</th><th>Template</th><th>Mode</th><th>Owner</th></tr></thead>
+          <tbody>@for (o of d.outputs; track $index) { <tr><td>{{ o.output }}</td><td class="small">{{ o.template }}</td><td><span class="badge">{{ o.mode }}</span></td><td class="small">{{ o.owner }}</td></tr> }</tbody>
+        </table>
+        @if (required().length) {
+          <div class="row small req">Required for {{ d.gate }}:
+            @for (t of required(); track t) {
+              @let doc = docFor(t);
+              <span class="badge" [class.good]="doc?.baselined" [class.warning]="doc && !doc.baselined" [class.critical]="!doc" [attr.data-tip]="tplName(t)">
+                {{ doc?.baselined ? '✓' : doc ? '…' : '✕' }} {{ t }}</span>
+              <button class="btn ghost sm" (click)="template(t)" [attr.data-tip]="'Download blank ' + tplName(t)">⤓ blank</button>
+            }
+          </div>
+        }
+        @for (doc of stageDocs(); track doc.id) {
+          <div class="doc">
+            <div class="docline">
+              <span class="badge" [class.info]="doc.direction === 'INPUT'">{{ doc.direction === 'INPUT' ? 'IN' : 'OUT' }}</span>
+              @if (doc.templateId) { <span class="mono">{{ doc.templateId }}</span> }
+              <b class="grow">{{ doc.title }}</b>
+              <span class="badge" [class.good]="doc.baselined">v{{ doc.currentVersion }} {{ doc.baselined ? 'baseline' : 'draft' }}</span>
+              <button class="btn sm" (click)="download(doc, doc.currentVersion)">Download</button>
+              @if (!doc.baselined && s.status !== 'APPROVED') { <button class="btn sm" (click)="baseline(doc)" [disabled]="busy()" data-tip="Freeze the latest version as the next major version">Baseline</button> }
+              <button class="icon-btn" (click)="openVersions.set(openVersions() === doc.id ? null : doc.id)">{{ doc.versions.length }} versions ▾</button>
+            </div>
+            @if (openVersions() === doc.id) {
+              <table class="data compact versions">
+                <thead><tr><th>Version</th><th>File</th><th>By</th><th>When</th><th>Comment</th><th>SHA-256</th><th></th></tr></thead>
+                <tbody>
+                  @for (v of doc.versions.slice().reverse(); track v.version) {
+                    <tr><td><b>{{ v.version }}</b> @if (v.baseline) { <span class="badge good">baseline</span> }</td><td class="small">{{ v.fileName }} · {{ v.size / 1024 | number: '1.0-0' }} KB</td>
+                      <td>{{ ctx.userName(v.uploadedBy) }}</td><td class="small nowrap">{{ v.uploadedAt | date: 'd MMM yy, HH:mm' }}</td><td class="small">{{ v.comment }}</td>
+                      <td class="mono small" [attr.data-tip]="v.sha256">{{ v.sha256.slice(0, 10) }}…</td><td><button class="btn sm" (click)="download(doc, v.version)">⤓</button></td></tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+        } @empty { <div class="empty small">No documents uploaded for this stage yet.</div> }
+        @if (s.status !== 'APPROVED' && s.status !== 'SKIPPED') {
+          <form #f class="upload" (ngSubmit)="doUpload(f)">
+            <label class="field">Template
+              <select name="tpl" [(ngModel)]="upload.templateId"><option value="">Other document</option>
+                @for (t of outputTemplates(); track t) { <option [value]="t">{{ t }} · {{ tplName(t) }}</option> }</select></label>
+            @if (!upload.templateId) { <label class="field">Title <input name="title" [(ngModel)]="upload.title" placeholder="e.g. Hardware lab test report"></label> }
+            <label class="field">Kind <select name="dir" [(ngModel)]="upload.direction"><option value="OUTPUT">Output</option><option value="INPUT">Input / evidence</option></select></label>
+            <label class="field">File <input type="file" name="file" (change)="pick($event)" required></label>
+            <label class="field">Version comment <input name="comment" [(ngModel)]="upload.comment" placeholder="What changed"></label>
+            <button class="btn primary" [disabled]="!upload.file || busy()">Upload</button>
+          </form>
+        }
+      </section>
+    </div>
+
+    <aside class="stack">
+      <section class="card gatecard">
+        <div class="card-head"><h2>Gate {{ d.gate }}</h2>
+          @if (gate(); as g) { <span class="badge" [class]="g.readyForReview || s.status === 'APPROVED' ? 'good' : s.status === 'IN_REVIEW' ? 'warning' : ''">
+            {{ s.status === 'APPROVED' ? 'Approved' : s.status === 'IN_REVIEW' ? 'Awaiting decision' : g.readyForReview ? 'Ready to submit' : 'Not ready' }}</span> }</div>
+        <p class="small muted">{{ d.gateText }}</p>
+        @if (gate(); as g) {
+          <ul class="conds">
+            @for (c of g.conditions; track c.code) {
+              <li [class.ok]="c.met" [class.waived]="c.waived" [class.bad]="!c.met && !c.waived">
+                <span class="ic">{{ c.met ? '✓' : c.waived ? '⚑' : '✕' }}</span>
+                <div><b>{{ c.label }}</b> <span class="tip" [attr.data-tip]="condHelp[c.code]">?</span><div class="small">{{ c.detail }}</div>
+                  @if (c.waiverKey) { <a class="small" routerLink="/waivers">{{ c.waiverKey }}</a> }</div>
+              </li>
+            }
+          </ul>
+          @if (s.status === 'IN_PROGRESS') {
+            <button class="btn primary full" [disabled]="!g.readyForReview || busy()" (click)="submit()">Submit {{ d.gate }} for review</button>
+            @if (!g.readyForReview) {
+              <p class="small muted">Meet the conditions above, or <a routerLink="/waivers" [queryParams]="{ request: 1, workItem: w.key, stage: d.id }">request a waiver</a> for a condition that cannot be met now.</p>
+            }
+          }
+          @if (s.status === 'IN_REVIEW') {
+            @if (canDecide()) {
+              <div class="decide">
+                <label class="field">Decision
+                  <select [(ngModel)]="decision.decision"><option value="APPROVED">Approve</option><option value="APPROVED_WITH_CONDITIONS">Approve with conditions</option><option value="REJECTED">Reject (back to in progress)</option></select></label>
+                <label class="field">L3 independent reviewer <span class="tip" data-tip="The person who checked the output. Cannot be the person who ran the AI prompt.">?</span>
+                  <select [(ngModel)]="decision.reviewer"><option value="">Me</option>@for (u of ctx.users(); track u.id) { @if (u.username !== s.aiOperator) { <option [value]="u.username">{{ u.fullName }}</option> } }</select></label>
+                <label class="field">Comment {{ decision.decision !== 'APPROVED' ? '(required)' : '' }}<textarea [(ngModel)]="decision.comment" [placeholder]="decision.decision === 'REJECTED' ? 'What must be fixed' : 'Conditions or remarks'"></textarea></label>
+                @for (b of g.approvalBlockers; track b) { @if (decision.decision !== 'REJECTED' || b.startsWith('You ran')) { <div class="callout bad small">{{ b }}</div> } }
+                <button class="btn full" [class.good]="decision.decision !== 'REJECTED'" [class.danger]="decision.decision === 'REJECTED'"
+                  [disabled]="busy() || (decision.decision !== 'APPROVED' && !decision.comment.trim()) || (decision.decision !== 'REJECTED' && !g.canApprove)" (click)="decide()">
+                  {{ decision.decision === 'REJECTED' ? 'Reject' : 'Approve' }} {{ d.gate }}</button>
+              </div>
+            } @else { <div class="callout small">Waiting for the {{ roleLabel[d.accountableRole] }} to decide.</div> }
+          }
+        }
+        @if (s.history.length) {
+          <h4>Decision history</h4>
+          @for (h of s.history.slice().reverse(); track $index) {
+            <div class="hist small"><span class="badge" [class]="tone(h.decision)">{{ human(h.decision) }}</span>
+              <span>{{ h.byName || ctx.userName(h.by) }}</span><span class="muted">{{ h.at | date: 'd MMM HH:mm' }}</span>
+              @if (h.reviewer) { <span class="muted">L3 {{ ctx.userName(h.reviewer) }}</span> }
+              @if (h.comment) { <div class="cm">“{{ h.comment }}”</div> }
+              @if (h.waiverKeys.length) { <div class="muted">Waived: {{ h.waivedConditions.join(', ') }} ({{ h.waiverKeys.join(', ') }})</div> }</div>
+          }
+        }
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h3>AI usage <span class="tip" data-tip="Declare how AI was used for this stage's output. AI-G needs a T11 declaration and a different person to sign the gate.">?</span></h3></div>
+        <div class="stack">
+          <select [(ngModel)]="ai.aiUsage" [disabled]="s.status === 'APPROVED'" aria-label="AI usage">
+            <option value="NONE">{{ aiLabel['NONE'] }}</option><option value="AI_A">AI-assisted (AI-A)</option><option value="AI_G">AI-generated (AI-G)</option></select>
+          @if (ai.aiUsage !== 'NONE') {
+            <label class="field">Who ran the prompt <select [(ngModel)]="ai.aiOperator"><option value="">Choose…</option>@for (u of ctx.users(); track u.id) { <option [value]="u.username">{{ u.fullName }}</option> }</select></label>
+            <label class="field">Unresolved AI assumptions <input type="number" min="0" [(ngModel)]="ai.unresolved"></label>
+          }
+          <p class="small muted">{{ aiLabel[ai.aiUsage] }}</p>
+          @if (s.status !== 'APPROVED') { <button class="btn" (click)="saveAi()" [disabled]="busy() || (ai.aiUsage !== 'NONE' && !ai.aiOperator)">Save declaration</button> }
+        </div>
+      </section>
+
+      @if (d.automatedChecks.length) {
+        <section class="card"><h3>Automated checks (L1)</h3>
+          <ul class="small plain">@for (a of d.automatedChecks; track a) { <li>{{ a }}</li> }</ul>
+          @if (d.requiredCiChecks.length) { <div class="small">Gate reads Jenkins results for: @for (c of d.requiredCiChecks; track c) { <span class="badge">{{ c }}</span> }</div> }
+        </section>
+      }
+    </aside>
+  </div>
+  } }
+  }
+
+  @case ('code') {
+  <div class="grid grid-2">
+    <section class="card"><h3>Pull requests</h3>
+      @for (p of w.pullRequests; track p.number) {
+        <div class="docline"><span class="badge" [class]="tone(p.state)">{{ p.state }}</span><a [href]="p.url" target="_blank" rel="noopener">#{{ p.number }}</a>
+          <span class="grow">{{ p.title }}</span><span class="small muted">{{ p.sourceBranch }} → {{ p.targetBranch }}</span></div>
+      } @empty { <div class="empty small">No pull request yet. Put <b>{{ w.key }}</b> in the PR title or branch name.</div> }
+    </section>
+    <section class="card"><h3>Commits</h3>
+      @for (c of w.commits.slice().reverse(); track c.sha) {
+        <div class="docline"><a class="mono" [href]="c.url" target="_blank" rel="noopener">{{ c.sha.slice(0, 8) }}</a><span class="grow ell">{{ c.message }}</span>
+          <span class="small muted">{{ c.author }}</span>@if (!c.validId) { <span class="badge critical" data-tip="Commit message has no work item or process ID">no ID</span> }</div>
+      } @empty { <div class="empty small">No commits linked. Start commit messages with {{ w.key }}{{ w.processId ? ' or ' + w.processId : '' }}.</div> }
+    </section>
+  </div>
+  <section class="card mt"><h3>Builds (Jenkins)</h3>
+    <div class="table-wrap"><table class="data compact">
+      <thead><tr><th>Build</th><th>Status</th><th>Checks</th><th>Parity</th><th>Commit</th><th>When</th></tr></thead>
+      <tbody>
+        @for (b of latestBuilds(); track b.job + b.number) {
+          <tr><td><a [href]="b.url" target="_blank" rel="noopener">{{ b.job }} #{{ b.number }}</a></td><td><span class="badge" [class]="tone(b.status)">{{ b.status }}</span></td>
+            <td>@for (c of checks(b); track c[0]) { <span class="badge" [class]="tone(c[1])">{{ c[0] }}</span> }</td>
+            <td class="small">@if (b.parity; as p) { {{ p['approved'] }} approved / {{ p['manual'] }} manual · {{ p['automated'] }} auto · {{ p['deferred'] }} deferred }</td>
+            <td class="mono small">{{ b.commit?.slice(0, 8) }}</td><td class="small nowrap">{{ b.at | date: 'd MMM HH:mm' }}</td></tr>
+        } @empty { <tr><td colspan="6"><div class="empty small">No builds reported.</div></td></tr> }
+      </tbody></table></div>
+  </section>
+  }
+
+  @case ('bugs') {
+  <section class="card">
+    <div class="card-head"><h3>Bugzilla</h3>
+      <div class="row">
+        <input type="number" placeholder="Bug ID" [(ngModel)]="bugId" aria-label="Bug ID" style="width:110px">
+        <button class="btn" (click)="linkBug()" [disabled]="!bugId || busy()">Link bug</button>
+        @if (wtKey(w) === 'SR_DEFECT' && !w.bugs.length) { <button class="btn primary" (click)="createBug()" [disabled]="busy()">Raise in Bugzilla</button> }
+        @if (w.bugs.length) { <button class="btn" (click)="refreshBugs()" [disabled]="busy()">↻ Refresh status</button> }
+      </div></div>
+    <table class="data">
+      <thead><tr><th>Bug</th><th>Summary</th><th>Status</th><th>Severity</th><th>Synced</th><th></th></tr></thead>
+      <tbody>
+        @for (b of w.bugs; track b.id) {
+          <tr><td><a [href]="b.url" target="_blank" rel="noopener"><b>{{ b.id }}</b></a></td><td>{{ b.summary }}</td>
+            <td><span class="badge" [class]="tone(b.status)">{{ b.status }}{{ b.resolution ? ' ' + b.resolution : '' }}</span></td><td>{{ b.severity }}</td>
+            <td class="small">{{ b.syncedAt | date: 'd MMM HH:mm' }} @if (b.syncError) { <div class="badge critical" [attr.data-tip]="b.syncError">sync error</div> }</td>
+            <td><button class="btn sm danger" (click)="unlinkBug(b.id)">Unlink</button></td></tr>
+        } @empty { <tr><td colspan="6"><div class="empty small">No Bugzilla bug linked.</div></td></tr> }
+      </tbody>
+    </table>
+    <p class="small muted">Linked bugs are resolved as FIXED automatically when G9 is approved, if the project enables it in Integrations.</p>
+  </section>
+  }
+
+  @case ('reqs') {
+  <section class="card">
+    <div class="card-head"><h3>Linked requirements</h3>
+      <div class="row"><input placeholder="e.g. DEP-REQ-214" [(ngModel)]="reqId" (keyup.enter)="linkReq()" aria-label="Requirement ID"><button class="btn" (click)="linkReq()" [disabled]="!reqId.trim()">Link</button>
+        <a class="btn ghost" routerLink="/traceability">Open matrix</a></div></div>
+    <div class="row">@for (r of w.requirementIds; track r) { <span class="badge info">{{ r }} <button class="icon-btn" (click)="unlinkReq(r)" [attr.aria-label]="'Unlink ' + r">✕</button></span> }
+      @empty { <div class="empty small grow">No requirements linked. NF and CR work should trace to REQ-IDs from T01.</div> }</div>
+  </section>
+  }
+
+  @case ('activity') {
+  <section class="card">
+    <h3>Audit trail</h3>
+    @for (e of activity(); track e.id) {
+      <div class="act"><span class="small muted nowrap">{{ e.at | date: 'd MMM yy, HH:mm:ss' }}</span><b>{{ ctx.userName(e.actor) }}</b>
+        <span class="badge">{{ e.action }}</span><span>{{ e.summary }}</span></div>
+    } @empty { <div class="empty small">No activity.</div> }
+  </section>
+  }
+  }
+</div>
+
+@if (edit; as e) {
+  <div class="backdrop" (click)="edit = null">
+    <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="saveEdit()">
+      <h2>Edit {{ w.key }}</h2>
+      <div class="stack">
+        <label class="field">Title <input name="t" [(ngModel)]="e['title']" required></label>
+        <label class="field">Description <textarea name="d" [(ngModel)]="e['description']"></textarea></label>
+        <div class="form-grid">
+          <label class="field">Priority <select name="p" [(ngModel)]="e['priority']"><option>HIGHEST</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option></select></label>
+          @if (w.type === 'SR') { <label class="field">Severity <select name="s" [(ngModel)]="e['severity']"><option value="">—</option><option>P1</option><option>P2</option><option>P3</option><option>P4</option></select></label> }
+          @if (w.type === 'CR') { <label class="field">CR class <select name="c" [(ngModel)]="e['crClass']"><option>MINOR</option><option>MAJOR</option></select></label> }
+          <label class="field">Assignee <select name="a" [(ngModel)]="e['assigneeId']"><option value="">Unassigned</option>@for (u of ctx.users(); track u.id) { <option [value]="u.username">{{ u.fullName }}</option> }</select></label>
+          <label class="field">Story points <input name="sp" type="number" min="0" [(ngModel)]="e['storyPoints']"></label>
+          <label class="field">Sprint <select name="spr" [(ngModel)]="e['sprintId']"><option value="">Backlog</option>@for (s of sprints(); track s.id) { <option [value]="s.id">{{ s.name }}</option> }</select></label>
+          @if (wtKey(w) === 'SR_DEFECT') { <label class="field">Escaped gate (RCA) <select name="mg" [(ngModel)]="e['missedGate']"><option value="">—</option>@for (x of ctx.stages(); track x.id) { <option [value]="x.gate">{{ x.gate }} {{ x.short }}</option> }</select></label> }
+        </div>
+      </div>
+      <div class="form-actions"><button type="button" class="btn" (click)="edit = null">Cancel</button><button class="btn primary" [disabled]="busy()">Save</button></div>
+    </form>
+  </div>
+}
+} @else { <div class="page"><div class="empty">Loading {{ key() }}…</div></div> }

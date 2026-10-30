@@ -55,7 +55,9 @@ const out = {
   docMap: D.DOC_MAP
 };
 fs.mkdirSync(path.join(OUT, 'process'), { recursive: true });
-fs.writeFileSync(path.join(OUT, 'process', 'process-definition.json'), JSON.stringify(out, null, 1));
+// This workplace tracks issues in Bugzilla; the generic process text names Jira.
+const json = JSON.stringify(out, null, 1).replace(/\bJira\b/g, 'Bugzilla');
+fs.writeFileSync(path.join(OUT, 'process', 'process-definition.json'), json);
 fs.mkdirSync(path.join(OUT, 'templates'), { recursive: true });
 fs.readdirSync(path.join(SRC, 'templates')).forEach(f => fs.copyFileSync(path.join(SRC, 'templates', f), path.join(OUT, 'templates', f)));
 console.log('exported', out.stages.length, 'stages,', out.templates.length, 'templates');

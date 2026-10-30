@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
     public record LoginRequest(@NotBlank String username, @NotBlank String password) { }
-    public record UserView(String id, String username, String fullName, String email, Set<Role> roles) {
-        static UserView of(User u) { return new UserView(u.id, u.username, u.fullName, u.email, u.roles); }
+    public record UserView(String id, String username, String fullName, String email, Set<Role> roles, boolean active) {
+        static UserView of(User u) { return new UserView(u.id, u.username, u.fullName, u.email, u.roles, u.active); }
     }
     public record LoginResponse(String token, Instant expiresAt, UserView user) { }
 

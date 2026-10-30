@@ -1,0 +1,35 @@
+# AI SDLC Workbench: MongoDB + Spring Boot API + Angular (nginx)
+#   docker compose up -d --build      then open http://localhost:8081
+# Set APP_JWT_SECRET (32+ characters) before using it beyond a trial. APP_SEED=true loads the demo project.
+services:
+  mongo:
+    image: mongo:8.0
+    restart: unless-stopped
+    volumes: [ "mongo-data:/data/db" ]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      retries: 10
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      mongo: { condition: service_healthy }
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/aisdlc
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-change-me-please-use-a-long-random-secret-0001}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://localhost:8081}
+      APP_CORS_ORIGINS: ${APP_PUBLIC_URL:-http://localhost:8081}
+      APP_SEED: ${APP_SEED:-true}
+    volumes: [ "api-logs:/app/logs" ]
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on: [ api ]
+    ports: [ "8081:80" ]
+
+volumes:
+  mongo-data:
+  api-logs:

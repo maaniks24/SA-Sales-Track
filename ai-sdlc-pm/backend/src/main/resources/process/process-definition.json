@@ -402,13 +402,13 @@
    "short": "Intake",
    "purpose": "Register every new work item, classify it as a New Feature, Change Request or Issue / Service Request, link it to the current baseline, and route it to the correct process path.",
    "entry": [
-    "Work item raised in Jira by business, support or an internal team",
+    "Work item raised in Bugzilla by business, support or an internal team",
     "Requester and business contact identified"
    ],
    "inputs": [
     {
      "item": "Work item description and attachments",
-     "source": "Jira",
+     "source": "Bugzilla",
      "preparedBy": "Requester",
      "mode": "M"
     },
@@ -465,8 +465,8 @@
    ],
    "outputs": [
     {
-     "output": "Classified Jira item: work type, ID, module, severity",
-     "template": "Jira",
+     "output": "Classified Bugzilla item: work type, ID, module, severity",
+     "template": "Bugzilla",
      "mode": "M",
      "owner": "BA"
     },
@@ -478,7 +478,7 @@
     },
     {
      "output": "Duplicate and related-item links",
-     "template": "Jira links",
+     "template": "Bugzilla links",
      "mode": "AI-A",
      "owner": "BA"
     },
@@ -510,7 +510,7 @@
     "V2"
    ],
    "automatedChecks": [
-    "Jira mandatory-field validation (work type, module, requester)"
+    "Bugzilla mandatory-field validation (work type, module, requester)"
    ],
    "responsibleRole": "BUSINESS_ANALYST",
    "accountableRole": "DELIVERY_MANAGER",
@@ -1063,7 +1063,7 @@
     },
     {
      "item": "REQ-ID or defect ID",
-     "source": "Jira",
+     "source": "Bugzilla",
      "preparedBy": "—",
      "mode": "M"
     },
@@ -1578,7 +1578,7 @@
     },
     {
      "output": "Defects linked to REQ-IDs",
-     "template": "Jira",
+     "template": "Bugzilla",
      "mode": "AI-A",
      "owner": "QA"
     },
@@ -1649,8 +1649,8 @@
    ],
    "inputs": [
     {
-     "item": "Merged code and the release scope from Jira",
-     "source": "Jira, code repository",
+     "item": "Merged code and the release scope from Bugzilla",
+     "source": "Bugzilla, code repository",
      "preparedBy": "Release Manager",
      "mode": "M"
     },
@@ -1697,7 +1697,7 @@
      "mode": "AI-G"
     },
     {
-     "activity": "Reconcile release notes with the RTM and Jira scope",
+     "activity": "Reconcile release notes with the RTM and Bugzilla scope",
      "performedBy": "Release Manager",
      "mode": "M"
     },
@@ -1861,7 +1861,7 @@
      "mode": "M"
     },
     {
-     "activity": "Business sign-off; freeze the RTM; close Jira items; raise context-gap changes",
+     "activity": "Business sign-off; freeze the RTM; close Bugzilla items; raise context-gap changes",
      "performedBy": "PO, BA, Architect",
      "mode": "M"
     }

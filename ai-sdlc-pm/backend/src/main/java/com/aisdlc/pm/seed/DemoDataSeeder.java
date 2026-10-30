@@ -86,6 +86,8 @@ public class DemoDataSeeder {
     private final Map<Role, String> holder = new LinkedHashMap<>();
     private Project fas;
     private int prNumber = 40;
+    private final String[] assignees = {"dev.arjun", "ravi.ba", "dev.meera", "vikram.qe", "sanjay.rev", "tara.tw"};
+    private int assigneeTurn;
     private long build = 300;
 
     public DemoDataSeeder(AppProperties props, UserService users, UserRepository userRepo, ProjectService projects, ProjectRepository projectRepo,
@@ -164,7 +166,7 @@ public class DemoDataSeeder {
         completeAndSubmit(dup, "S4");
 
         WorkItem life = create("ravi.ba", WorkItem.Type.SR, WorkItem.SrKind.SERVICE, null, "Change useful life of IT equipment class from 3 to 4 years", "FAM",
-            List.of("INTERNAL"), "MEDIUM", null, 2, sp[0].id, "Finance policy change effective 1 Oct; configuration only.");
+            List.of("INTERNAL"), "MEDIUM", null, 2, sp[1].id, "Finance policy change effective 1 Oct; configuration only.");
         progress(life, "S9", true);
 
         WorkItem export = create("ravi.ba", WorkItem.Type.NF, null, null, "Export asset audit trail to CSV for statutory auditors", "AUD",
@@ -236,6 +238,7 @@ public class DemoDataSeeder {
 
         backdate();
         snapshotBurndown(sp[1]);
+        closedSprintBurndown(sp[0]);
     }
 
     // ---- stage driving ---------------------------------------------------------------------------------------
@@ -481,7 +484,7 @@ public class DemoDataSeeder {
     private WorkItem create(String user, WorkItem.Type type, WorkItem.SrKind kind, String crClass, String title, String module, List<String> surfaces,
                             String priority, String severity, Integer points, String sprintId, String description) {
         return as(user, () -> workItems.create(fas.id, new WorkItemService.CreateWorkItem(type, kind, title, description, module, surfaces, priority, severity, crClass,
-            holder.get(type == WorkItem.Type.SR ? Role.DEVELOPER : Role.BUSINESS_ANALYST), points, sprintId, List.of())));
+            assignees[assigneeTurn++ % assignees.length], points, sprintId, List.of())));
     }
 
     private void req(WorkItem w, String... ids) { for (String id : ids) as("ravi.ba", () -> workItems.linkRequirement(w.key, id, true)); }
@@ -537,8 +540,22 @@ public class DemoDataSeeder {
         }
         int committed = itemRepo.findBySprintId(s.id).stream().mapToInt(w -> w.storyPoints == null ? 0 : w.storyPoints).sum();
         List<Sprint.BurnPoint> pts = new ArrayList<>();
-        int[] done = {0, 0, 2, 2, 5, 5};
+        int actualDone = itemRepo.findBySprintId(s.id).stream().filter(w -> w.column == Column.DONE).mapToInt(w -> w.storyPoints == null ? 0 : w.storyPoints).sum();
+        int[] done = {0, 0, 0, actualDone, actualDone, actualDone};
         for (int d = 0; d < done.length; d++) pts.add(new Sprint.BurnPoint(cur.start.plusDays(d), committed - done[d], done[d]));
+        cur.burndown = pts;
+        sprintRepo.save(cur);
+    }
+
+    private void closedSprintBurndown(Sprint s) {
+        Sprint cur = sprintRepo.findById(s.id).orElseThrow();
+        int committed = itemRepo.findBySprintId(s.id).stream().mapToInt(w -> w.storyPoints == null ? 0 : w.storyPoints).sum();
+        int days = (int) java.time.temporal.ChronoUnit.DAYS.between(cur.start, cur.end);
+        List<Sprint.BurnPoint> pts = new ArrayList<>();
+        for (int d = 0; d <= days; d += 2) {
+            int done = Math.min(committed, committed * d / Math.max(1, days - 1));
+            pts.add(new Sprint.BurnPoint(cur.start.plusDays(d), committed - done, done));
+        }
         cur.burndown = pts;
         sprintRepo.save(cur);
     }
