@@ -14,8 +14,10 @@ thin = Side(style='thin', color='C9D6DB'); BORDER = Border(left=thin, right=thin
 HDR, DATA0 = 4, 6          # header row, first data row (row 5 = example)
 
 wb = Workbook()
+SPECS = []
 def sheet(name, title, cols, rows=200, example=None, formulas=None, lists=None, notes=None, widths=None, date_cols=(), pct_cols=()):
     ws = wb.create_sheet(name)
+    SPECS.append({'name': name, 'title': title, 'cols': cols, 'auto': list((formulas or {}).keys()), 'example': [None if (cols[i] in (formulas or {})) else (str(v) if v is not None else '') for i, v in enumerate(example or [])], 'notes': notes or {}, 'lists': lists or {}})
     ws['A1'] = title; ws['A1'].font = Font(name=F, bold=True, size=14, color=INK)
     ws['A2'] = 'White cells: enter data.  Grey cells: calculated, do not edit.  Row 5 is an example; overwrite or delete it.'
     ws['A2'].font = Font(name=F, italic=True, size=9, color=SLATE)
@@ -202,3 +204,5 @@ for ws_name, cols in [('Gate Log', ['Q']), ('AI Usage Log', ['A']), ('Waivers', 
         cell = wb[ws_name][f'{c}5']
         if isinstance(cell.value, str): cell.value = datetime.date.fromisoformat(cell.value); cell.number_format = 'dd-mmm-yyyy'
 wb.save(OUT); print('saved', OUT)
+import json
+json.dump({'sheets': SPECS, 'readme': [l[0] for l in lines if l[0]]}, open(os.path.join(os.path.dirname(__file__), 'tracker_spec.json'), 'w'), indent=1)

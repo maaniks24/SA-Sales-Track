@@ -69,32 +69,9 @@ function sec1() {
       [[run('Every person who creates, reviews or approves a product artifact, whether or not they use AI')], [run('Personal productivity use of AI that produces no product artifact')]]
     ], [CW / 2, CW / 2]),
     H2('1.3  Audience and how to use this document'),
-    table(['If you are…', 'Read first', 'Then use'], [
-      ['Product Owner or Business Analyst', 'Sections 2, 3, 4.1 to 4.3, 5', 'T01, T04, T10, T11'],
-      ['Technical Writer', 'Sections 2, 4.3, 6, 7', 'T02, T10, T11'],
-      ['Architect or Tech Lead', 'All sections; you own sections 3, 7 and 9', 'T03, T04, T09, T10, T14'],
-      ['Developer', 'Sections 2, 4.5, 4.6, 5.3, 6, 7, 8', 'T09, T11, Context Pack'],
-      ['QA or Automation Engineer', 'Sections 2, 4.7, 4.8, 6', 'T07, T08, T10, T11'],
-      ['Release Manager or DevOps', 'Sections 4.9, 4.10, 5.3', 'T12, T13, T10'],
-      ['Delivery Manager or Council member', 'Sections 2, 3, 9, 10, 11', 'X01, T15']
-    ], [3000, 3600, CW - 6600], { boldCols: [0] }),
+    table(['If you are…', 'Read first', 'Then use'], D.AUDIENCE, [3000, 3600, CW - 6600], { boldCols: [0] }),
     H2('1.4  Definitions and abbreviations'),
-    table(['Term', 'Meaning'], [
-      ['AI operator', 'The person who runs an AI prompt and is accountable for its output until it is reviewed.'],
-      ['AI-G / AI-A / AI-X', 'AI-Generated, AI-Assisted, AI Not Permitted. See section 2.2.'],
-      ['Context Pack (CP)', 'The versioned folder /ai-context holding the standards, registries, templates and examples that every AI prompt loads. Section 7.'],
-      ['CR', 'Change Request: a change to behaviour that is already baselined.'],
-      ['Gate (G0 to G9)', 'The recorded decision that closes a stage. A stage output becomes the next stage input only after its gate.'],
-      ['Golden example', 'A reviewed reference implementation for a surface that AI is told to imitate (CP-99).'],
-      ['NBV, SLM, WDV, CWIP', 'Net book value; straight-line method; written-down value; capital work in progress.'],
-      ['NF', 'New application or new feature.'],
-      ['Parity check', 'The automated comparison that approved test cases equal executed plus automated plus formally deferred cases.'],
-      ['RCA', 'Root Cause Analysis (T06).'],
-      ['RTM', 'Requirement Traceability Matrix, held in X01.'],
-      ['SFVD', 'The screens, fields, validations and data document (T02) that development and testing both work from.'],
-      ['SME', 'Subject-matter expert, here usually a fixed-asset accounting expert.'],
-      ['SR', 'Issue fix or service request: a defect, or an operational change to data, configuration or access.']
-    ], [2600, CW - 2600], { boldCols: [0] })
+    table(['Term', 'Meaning'], D.GLOSSARY, [2600, CW - 2600], { boldCols: [0] })
   ];
 }
 
@@ -103,13 +80,7 @@ function sec2() {
   return [
     H1('2  Principles, Process Modes and AI Permissions'),
     H2('2.1  Principles'),
-    ...numbered([
-      [['AI drafts, a person decides, the gate records. ', { bold: true }], 'AI output is never a deliverable as generated. It becomes one only when a named reviewer accepts it and the gate is recorded in T10.'],
-      [['Context is shared, never personal. ', { bold: true }], 'Standards, structure, shared libraries, style classes, registries and test data live in one versioned Context Pack that every prompt loads.'],
-      [['Nothing moves without an ID. ', { bold: true }], 'Every artifact, commit, test case and defect carries its requirement, CR or SR ID. If it is not linked it does not ship.'],
-      [['Reuse before create. ', { bold: true }], 'A new utility, base method, style class, validation ID or service is justified in writing, or it is not created.'],
-      [['Evidence or it did not happen. ', { bold: true }], 'A gate passes only with a recorded artifact: checklist, scan result, approval. Verbal sign-off is not a gate.']
-    ]),
+    ...numbered(D.PRINCIPLES.map(([a, b]) => [[a + ' ', { bold: true }], b])),
     H2('2.2  Process modes'),
     P('Every input, activity and output in this document is tagged with one mode. The tag tells you who produces it and how much verification it needs.'),
     table(['Mode', 'Name', 'Meaning', 'Verification required'], Object.values(D.MODES).map(m => [m.code, m.name, m.desc,
@@ -122,15 +93,7 @@ function sec2() {
       [[bulletsCell(D.AI_PERMISSIONS.AG), bulletsCell(D.AI_PERMISSIONS.AA), bulletsCell(D.AI_PERMISSIONS.NA)]], [3100, 3000, CW - 6100], { zebra: false,
         fills: [[X.MODE['AI-G'][1], X.MODE['AI-A'][1], X.MODE['AI-X'][1]]] }),
     H2('2.4  Rules for every AI interaction'),
-    ...bullets([
-      'Use only AI tools on the approved list in CP-40, through company accounts.',
-      'Never put production personal data, financial records, credentials or secrets into a prompt. Use seed data from CP-31.',
-      'Start from the approved, versioned input of the previous stage, never from memory or an unapproved draft.',
-      'Use the stage prompt template from CP-50. Do not combine two stages in one prompt.',
-      'Record every AI-G use in T11: tool, prompt template and version, Context Pack version, sections generated, assumptions.',
-      'You own what AI produces for you. “The AI generated it” is not accepted at review.',
-      'If AI repeatedly gets something wrong, raise a Context Pack change (T14); do not just fix your own copy.'
-    ])
+    ...bullets(D.AI_RULES)
   ];
 }
 function bulletsCell(items) { return items.map(t => new Paragraph({ numbering: { reference: 'bul', level: 0 }, children: [run(t, { size: 19 })], spacing: { after: 40 } })); }
@@ -140,14 +103,7 @@ function sec3() {
   const sum = D.STAGES.map(s => {
     const out = s.outputs[0]; return [s.id + '  ' + s.name, s.inputs[0][0], out[0] + ' (' + out[1] + ')', [modeRuns((X.CODE[out[2]] || out[2]) + (out[2] === 'AG' ? ' → M' : ''))], s.gate, s.raci.A];
   });
-  const rules = [
-    ['Does the capability exist in the baselined product?', 'No', 'NF: new feature or application'],
-    ['Does baselined behaviour, a rule, a screen, a report or an interface need to change on purpose?', 'Yes', 'CR: change request'],
-    ['Does the product behave differently from the baselined SFVD or requirement?', 'Yes', 'SR: defect fix'],
-    ['Is the request to change data, configuration or access with no code change?', 'Yes', 'SR: service request'],
-    ['A “defect” where the product matches the SFVD but the business now wants something else', '—', 'Re-route as CR'],
-    ['A “service request” that turns out to need code', '—', 'Re-route as CR or defect']
-  ];
+  const rules = D.CLASS_RULES;
   return [
     H1('3  Process Overview'),
     H2('3.1  The master flow'),

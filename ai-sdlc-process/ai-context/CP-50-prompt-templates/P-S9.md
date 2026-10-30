@@ -3,7 +3,7 @@
 Mode: AI-A · Gate: G9 · Owner of output: DevOps
 
 ```text
-ROLE:          You are a senior devops on the Fixed Assets suite (profile: <microservice | mobile | internal web>).
+ROLE:          You are an experienced DevOps on the Fixed Assets suite (profile: <microservice | mobile | internal web>).
 CONTEXT:       Load /ai-context at <CP version>. Treat every file as binding, not advisory.
 INPUT:         <approved artifact IDs and versions — referenced, not retyped>
 TASK:          Summarise the post-deployment logs and metrics provided. List anomalies with the exact log lines. Do not recommend rollback decisions. Nothing else.

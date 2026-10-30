@@ -61,63 +61,22 @@ function landscapeFig(file, caption) { return [...X.figure(FIG(file), caption, C
 function sec5b() {
   return [
     H3('Step-by-step: new feature'),
-    steps([
-      ['S0', 'Raise the need with review points', 'Business', 'M', 'T01 Part A'],
-      ['S0', 'Intake and classify as NF; register module prefix if new', 'BA', 'M + AI-A', 'Jira item', 'G0'],
-      ['S1', 'Draft register, reconcile, resolve open questions', 'BA', 'AI-G → M', 'T01, T11'],
-      ['S1', 'Approve register; freeze REQ-IDs', 'Product Owner', 'M', 'T10', 'G1'],
-      ['S2', 'Draft SFVD, verify fields and registry IDs', 'Tech Writer', 'AI-G → M', 'T02, T11', 'G2'],
-      ['S3', 'Draft design and contract; architecture, DB and security review', 'Tech Lead, Architect', 'AI-G → M', 'T03', 'G3'],
-      ['S6', 'Draft test cases and data; SME verification (starts at G2)', 'QA', 'AI-G → M', 'T07, T08', 'G6'],
-      ['S4', 'Generate code and tests; self-review; pull request', 'Developer', 'AI-G → M', 'T09, T11', 'G4'],
-      ['S5', 'Independent code review', 'Reviewer', 'M + AI-A', 'Merged PR', 'G5'],
-      ['S7', 'Automate and execute; parity check', 'QA, Automation', 'AI-G → M + AUTO', 'Parity report', 'G7'],
-      ['S8', 'Package, release notes, runbook', 'Release Manager', 'AI-G → M', 'T12, T13', 'G8'],
-      ['S9', 'Deploy, smoke, monitor, business sign-off', 'DevOps, QA, PO', 'M + AUTO', 'T13, T10', 'G9']
-    ]),
+    steps(D.STEPS_NF),
     H3('Rules specific to new features'),
-    ...bullets([
-      'A new module gets its prefix registered in CP-00 before S1 starts, so IDs are valid from the first requirement.',
-      'The first feature on a new surface or service creates that surface’s golden example (CP-99) during S3 and S4. The Architect reviews it; later features imitate it.',
-      'Any new shared component, validator or style class is added to CP-20, CP-21 or CP-23 in the same release, through T14.',
-      'Architecture spikes may use AI freely, but spike code is never merged. Findings are recorded in T03.',
-      'Non-functional baselines are fixed at S1: asset volumes, depreciation run window, month-end close time, mobile offline duration.'
-    ]),
+    ...bullets(D.RULES_NF),
     H2('5.2  Enhancement or change request (CR)', { newPage: true }),
     P([['When. ', { bold: true }], D.WORK_TYPES.CR.when + ' Examples: ' + D.WORK_TYPES.CR.examples.join('; ') + '.']),
     P('A CR starts with an impact analysis (T04) instead of a fresh requirement register. Documents are updated as deltas, and regression testing is selected from the RTM. The flow diagram is on the next page.'),
     H3('CR classification'),
-    table(['Class', 'Criteria (any one is enough for Major)', 'Effect on the flow'], [
-      ['Minor', 'No contract or schema change; one surface; estimated at five working days or fewer', 'S3 not run; design notes recorded in T04 section 6. S6 and S7 delta.'],
-      ['Major', 'Contract or schema change; more than one surface; more than five working days; any change to a financial calculation', 'S3 run in full with contract versioning and migration review. SME re-derivation mandatory at S6.']
-    ], [1100, 4300, CW - 5400], { boldCols: [0] })
+    table(['Class', 'Criteria (any one is enough for Major)', 'Effect on the flow'], D.CR_CLASS, [1100, 4300, CW - 5400], { boldCols: [0] })
   ];
 }
 function sec5c() {
   return [
     H3('Step-by-step: change request'),
-    steps([
-      ['S0', 'Raise CR; link to the baselined REQ-IDs and SFVD version', 'Requester, BA', 'M + AI-A', 'Jira CR', 'G0'],
-      ['S1', 'Impact analysis: AI searches RTM and code; Architect confirms each item', 'Architect, BA', 'M + AI-A', 'T04'],
-      ['S1', 'Approve scope, effort, impact and CR class', 'Product Owner', 'M', 'T04, T10', 'G1'],
-      ['S2', 'Update affected SFVD sections with change marks; bump version', 'Tech Writer', 'AI-G → M', 'T02 delta, T11', 'G2'],
-      ['S3', 'Major CR only: design delta, contract version, migration', 'Tech Lead, Architect', 'AI-G → M', 'T03', 'G3'],
-      ['S6', 'New cases + regression selection proposed from RTM; QA Lead confirms', 'QA', 'AI-G + AI-A → M', 'T07, T08', 'G6'],
-      ['S4', 'Code change and unit tests', 'Developer', 'AI-G → M', 'T09, T11', 'G4'],
-      ['S5', 'Review including backward compatibility', 'Reviewer', 'M + AI-A', 'Merged PR', 'G5'],
-      ['S7', 'Execute new and impacted regression; parity', 'QA', 'AI-G → M + AUTO', 'Parity report', 'G7'],
-      ['S8', 'Version bump, release notes listing the CR', 'Release Manager', 'AI-G → M', 'T12', 'G8'],
-      ['S9', 'Deploy, smoke, business acceptance', 'DevOps, PO', 'M + AUTO', 'T13, T10', 'G9']
-    ]),
+    steps(D.STEPS_CR),
     H3('Rules specific to change requests'),
-    ...bullets([
-      'No CR is approved without a completed T04. AI may search the RTM and code for impact, but the Architect confirms every impacted item.',
-      'A changed requirement keeps its ID with a revision suffix (DEP-REQ-214.r2). New behaviour gets a new ID. Retired requirements are marked retired, never deleted.',
-      'The SFVD is updated in place with change marks and a minor version bump; the revision table lists the CR ID and changed sections.',
-      'Regression selection: AI proposes impacted cases from the RTM and the changed files; the QA Lead confirms. The minimum is impacted cases plus smoke plus the critical-path pack (depreciation run, month-end close, label print, verification sync).',
-      'Mobile apps in the field cannot all be updated at once. APIs must keep serving the previous mobile release (N-1) until the Council retires it.',
-      'For changed financial rules, the PO and Finance decide whether the change is prospective or retrospective. A retrospective change needs Finance approval recorded in T04.'
-    ])
+    ...bullets(D.RULES_CR)
   ];
 }
 function sec5d() {
@@ -132,36 +91,11 @@ function sec5d() {
     H3('Service request types'),
     table(['Type', 'Examples', 'Controls'], D.SR_TYPES, [1900, 3300, CW - 5200], { boldCols: [0] }),
     H3('Step-by-step: defect fix'),
-    steps([
-      ['S0', 'Triage: reproduce, classify, provisional severity', 'Triage Lead', 'M + AI-A', 'T05', 'G0'],
-      ['S4', 'Write the failing test that reproduces the defect', 'Developer', 'M', 'Test in branch'],
-      ['S1', 'Root cause analysis: cause, why not caught, gate missed', 'Developer, Tech Lead', 'AI-X', 'T06'],
-      ['S1', 'Approve RCA; confirm severity and AI permission', 'Tech Lead (Architect for P1/P2)', 'M', 'T06, T10', 'G1'],
-      ['S2', 'Update SFVD only if designed behaviour changes', 'Tech Writer', 'AI-G → M', 'T02 delta'],
-      ['S4', 'Fix: P1/P2 manual only; P3/P4 AI-G allowed', 'Developer', 'AI-X / AI-G → M', 'T09, T11', 'G4'],
-      ['S5', 'Review: two engineers + Architect for P1/P2', 'Reviewers', 'M', 'Merged PR', 'G5'],
-      ['S7', 'Failing test passes; targeted + regression pack', 'QA', 'AUTO + M', 'Report', 'G7'],
-      ['S8', 'Hotfix (P1/P2) or scheduled release (P3/P4)', 'Release Manager', 'AI-G → M', 'T12', 'G8'],
-      ['S9', 'Deploy, smoke, extended monitoring; close', 'DevOps, QA', 'M + AUTO', 'T13, T10', 'G9']
-    ]),
+    steps(D.STEPS_DEFECT),
     H3('Step-by-step: service request'),
-    steps([
-      ['S0', 'Triage and classify SR type', 'Triage Lead', 'M + AI-A', 'T05 Part A', 'G0'],
-      ['S4', 'Prepare scripted, reversible change with rollback', 'Developer / Admin', 'M or AI-G → M', 'T05 Part C'],
-      ['S5', 'Peer review and dry run in test; before/after evidence', 'Peer reviewer', 'M', 'T05 Part D', 'G5'],
-      ['S9', 'Execute under change record', 'Authorised admin', 'M', 'Change record'],
-      ['S9', 'Verify with requester; attach evidence; close', 'Requester, Triage Lead', 'M', 'T05 Part E', 'G9']
-    ]),
+    steps(D.STEPS_SERVICE),
     H3('Rules specific to issues and service requests'),
-    ...bullets([
-      'Reproduce first. The failing test is committed before the fix and stays in the regression pack.',
-      'Root cause analysis is always manual (AI-X). AI may summarise logs to help, but the cause is written by the engineer.',
-      'Every RCA names the gate that should have caught the defect. That gate’s checklist, the Context Pack or the regression pack is improved, or a waiver is logged.',
-      'Hotfix branches are cut from the release tag and merged back to the main branch after release.',
-      'Scripts that change cost, accumulated depreciation or NBV are AI-X, need two reviewers and a dry run on a production-like copy.',
-      'Production data and configuration are changed only by an authorised admin under a change record, never directly by a developer.',
-      'A service request that needs code, or that reveals a defect, is re-routed as a CR or a defect.'
-    ])
+    ...bullets(D.RULES_SR)
   ];
 }
 module.exports = { sec4, sec5a, sec5b, sec5c, sec5d, landscapeFig };

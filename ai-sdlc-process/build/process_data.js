@@ -633,4 +633,282 @@ const AI_PERMISSIONS = {
   NA: ['Classifying work type or setting severity', 'Approving any gate, pull request or release', 'Answering its own open questions or assumptions', 'Root cause analysis for any defect', 'Fixes for P1 and P2 defects', 'Scripts that change cost, accumulated depreciation or NBV', 'Executing deployments, rollbacks or production data changes', 'Prompts containing production personal data, financial records or secrets', 'Creating new validation IDs, error codes or style classes outside the registry process']
 };
 
-module.exports = { MODES, WORK_TYPES, STAGES, TAILORING, TAILOR_KEY, SEVERITY, SR_TYPES, TECHNIQUES, UNIVERSAL_CHECKLIST, DOMAIN_CHECKS, TEMPLATES, CONTEXT_PACK, ID_CONVENTIONS, ROLES, RACI_ROLES, RACI, METRICS, AI_PERMISSIONS };
+
+/* Document lifecycle: P produced/updated, U used as input, S gate sign-off; string = any stage */
+const DOC_MAP = {
+  T01: { S0: 'P', S1: 'P', S2: 'U', S6: 'U' }, T02: { S2: 'P', S3: 'U', S4: 'U', S5: 'U', S6: 'U' },
+  T03: { S3: 'P', S4: 'U', S5: 'U', S6: 'U' }, T04: { S0: 'P', S1: 'P', S2: 'U', S6: 'U' },
+  T05: { S0: 'P', S4: 'U', S9: 'P' }, T06: { S1: 'P', S4: 'U', S6: 'U', S9: 'U' },
+  T07: { S6: 'P', S7: 'U' }, T08: { S6: 'P', S7: 'U' }, T09: { S4: 'P', S5: 'P' },
+  T10: { S0: 'S', S1: 'S', S2: 'S', S3: 'S', S4: 'S', S5: 'S', S6: 'S', S7: 'S', S8: 'S', S9: 'S' },
+  T11: { S1: 'P', S2: 'P', S3: 'P', S4: 'P', S6: 'P', S7: 'P', S8: 'P' }, T12: { S8: 'P', S9: 'U' }, T13: { S8: 'P', S9: 'P' },
+  T14: 'Any stage when a context gap is found; reviewed at every S9', T15: 'Any stage when a rule cannot be met; approved by the Council',
+  X01: { S0: 'P', S1: 'P', S2: 'P', S6: 'P', S7: 'P', S8: 'P', S9: 'P' }
+};
+
+/* Moved from the document builder so the portal and the document share one source. */
+const AUDIENCE = [
+      ['Product Owner or Business Analyst', 'Sections 2, 3, 4.1 to 4.3, 5', 'T01, T04, T10, T11'],
+      ['Technical Writer', 'Sections 2, 4.3, 6, 7', 'T02, T10, T11'],
+      ['Architect or Tech Lead', 'All sections; you own sections 3, 7 and 9', 'T03, T04, T09, T10, T14'],
+      ['Developer', 'Sections 2, 4.5, 4.6, 5.3, 6, 7, 8', 'T09, T11, Context Pack'],
+      ['QA or Automation Engineer', 'Sections 2, 4.7, 4.8, 6', 'T07, T08, T10, T11'],
+      ['Release Manager or DevOps', 'Sections 4.9, 4.10, 5.3', 'T12, T13, T10'],
+      ['Delivery Manager or Council member', 'Sections 2, 3, 9, 10, 11', 'X01, T15']
+    ];
+const GLOSSARY = [
+      ['AI operator', 'The person who runs an AI prompt and is accountable for its output until it is reviewed.'],
+      ['AI-G / AI-A / AI-X', 'AI-Generated, AI-Assisted, AI Not Permitted. See section 2.2.'],
+      ['Context Pack (CP)', 'The versioned folder /ai-context holding the standards, registries, templates and examples that every AI prompt loads. Section 7.'],
+      ['CR', 'Change Request: a change to behaviour that is already baselined.'],
+      ['Gate (G0 to G9)', 'The recorded decision that closes a stage. A stage output becomes the next stage input only after its gate.'],
+      ['Golden example', 'A reviewed reference implementation for a surface that AI is told to imitate (CP-99).'],
+      ['NBV, SLM, WDV, CWIP', 'Net book value; straight-line method; written-down value; capital work in progress.'],
+      ['NF', 'New application or new feature.'],
+      ['Parity check', 'The automated comparison that approved test cases equal executed plus automated plus formally deferred cases.'],
+      ['RCA', 'Root Cause Analysis (T06).'],
+      ['RTM', 'Requirement Traceability Matrix, held in X01.'],
+      ['SFVD', 'The screens, fields, validations and data document (T02) that development and testing both work from.'],
+      ['SME', 'Subject-matter expert, here usually a fixed-asset accounting expert.'],
+      ['SR', 'Issue fix or service request: a defect, or an operational change to data, configuration or access.']
+    ];
+const CLASS_RULES = [
+    ['Does the capability exist in the baselined product?', 'No', 'NF: new feature or application'],
+    ['Does baselined behaviour, a rule, a screen, a report or an interface need to change on purpose?', 'Yes', 'CR: change request'],
+    ['Does the product behave differently from the baselined SFVD or requirement?', 'Yes', 'SR: defect fix'],
+    ['Is the request to change data, configuration or access with no code change?', 'Yes', 'SR: service request'],
+    ['A “defect” where the product matches the SFVD but the business now wants something else', '—', 'Re-route as CR'],
+    ['A “service request” that turns out to need code', '—', 'Re-route as CR or defect']
+  ];
+const AI_RULES = [
+      'Use only AI tools on the approved list in CP-40, through company accounts.',
+      'Never put production personal data, financial records, credentials or secrets into a prompt. Use seed data from CP-31.',
+      'Start from the approved, versioned input of the previous stage, never from memory or an unapproved draft.',
+      'Use the stage prompt template from CP-50. Do not combine two stages in one prompt.',
+      'Record every AI-G use in T11: tool, prompt template and version, Context Pack version, sections generated, assumptions.',
+      'You own what AI produces for you. “The AI generated it” is not accepted at review.',
+      'If AI repeatedly gets something wrong, raise a Context Pack change (T14); do not just fix your own copy.'
+    ];
+const STEPS_NF = [
+      ['S0', 'Raise the need with review points', 'Business', 'M', 'T01 Part A'],
+      ['S0', 'Intake and classify as NF; register module prefix if new', 'BA', 'M + AI-A', 'Jira item', 'G0'],
+      ['S1', 'Draft register, reconcile, resolve open questions', 'BA', 'AI-G → M', 'T01, T11'],
+      ['S1', 'Approve register; freeze REQ-IDs', 'Product Owner', 'M', 'T10', 'G1'],
+      ['S2', 'Draft SFVD, verify fields and registry IDs', 'Tech Writer', 'AI-G → M', 'T02, T11', 'G2'],
+      ['S3', 'Draft design and contract; architecture, DB and security review', 'Tech Lead, Architect', 'AI-G → M', 'T03', 'G3'],
+      ['S6', 'Draft test cases and data; SME verification (starts at G2)', 'QA', 'AI-G → M', 'T07, T08', 'G6'],
+      ['S4', 'Generate code and tests; self-review; pull request', 'Developer', 'AI-G → M', 'T09, T11', 'G4'],
+      ['S5', 'Independent code review', 'Reviewer', 'M + AI-A', 'Merged PR', 'G5'],
+      ['S7', 'Automate and execute; parity check', 'QA, Automation', 'AI-G → M + AUTO', 'Parity report', 'G7'],
+      ['S8', 'Package, release notes, runbook', 'Release Manager', 'AI-G → M', 'T12, T13', 'G8'],
+      ['S9', 'Deploy, smoke, monitor, business sign-off', 'DevOps, QA, PO', 'M + AUTO', 'T13, T10', 'G9']
+    ];
+const STEPS_CR = [
+      ['S0', 'Raise CR; link to the baselined REQ-IDs and SFVD version', 'Requester, BA', 'M + AI-A', 'Jira CR', 'G0'],
+      ['S1', 'Impact analysis: AI searches RTM and code; Architect confirms each item', 'Architect, BA', 'M + AI-A', 'T04'],
+      ['S1', 'Approve scope, effort, impact and CR class', 'Product Owner', 'M', 'T04, T10', 'G1'],
+      ['S2', 'Update affected SFVD sections with change marks; bump version', 'Tech Writer', 'AI-G → M', 'T02 delta, T11', 'G2'],
+      ['S3', 'Major CR only: design delta, contract version, migration', 'Tech Lead, Architect', 'AI-G → M', 'T03', 'G3'],
+      ['S6', 'New cases + regression selection proposed from RTM; QA Lead confirms', 'QA', 'AI-G + AI-A → M', 'T07, T08', 'G6'],
+      ['S4', 'Code change and unit tests', 'Developer', 'AI-G → M', 'T09, T11', 'G4'],
+      ['S5', 'Review including backward compatibility', 'Reviewer', 'M + AI-A', 'Merged PR', 'G5'],
+      ['S7', 'Execute new and impacted regression; parity', 'QA', 'AI-G → M + AUTO', 'Parity report', 'G7'],
+      ['S8', 'Version bump, release notes listing the CR', 'Release Manager', 'AI-G → M', 'T12', 'G8'],
+      ['S9', 'Deploy, smoke, business acceptance', 'DevOps, PO', 'M + AUTO', 'T13, T10', 'G9']
+    ];
+const STEPS_DEFECT = [
+      ['S0', 'Triage: reproduce, classify, provisional severity', 'Triage Lead', 'M + AI-A', 'T05', 'G0'],
+      ['S4', 'Write the failing test that reproduces the defect', 'Developer', 'M', 'Test in branch'],
+      ['S1', 'Root cause analysis: cause, why not caught, gate missed', 'Developer, Tech Lead', 'AI-X', 'T06'],
+      ['S1', 'Approve RCA; confirm severity and AI permission', 'Tech Lead (Architect for P1/P2)', 'M', 'T06, T10', 'G1'],
+      ['S2', 'Update SFVD only if designed behaviour changes', 'Tech Writer', 'AI-G → M', 'T02 delta'],
+      ['S4', 'Fix: P1/P2 manual only; P3/P4 AI-G allowed', 'Developer', 'AI-X / AI-G → M', 'T09, T11', 'G4'],
+      ['S5', 'Review: two engineers + Architect for P1/P2', 'Reviewers', 'M', 'Merged PR', 'G5'],
+      ['S7', 'Failing test passes; targeted + regression pack', 'QA', 'AUTO + M', 'Report', 'G7'],
+      ['S8', 'Hotfix (P1/P2) or scheduled release (P3/P4)', 'Release Manager', 'AI-G → M', 'T12', 'G8'],
+      ['S9', 'Deploy, smoke, extended monitoring; close', 'DevOps, QA', 'M + AUTO', 'T13, T10', 'G9']
+    ];
+const STEPS_SERVICE = [
+      ['S0', 'Triage and classify SR type', 'Triage Lead', 'M + AI-A', 'T05 Part A', 'G0'],
+      ['S4', 'Prepare scripted, reversible change with rollback', 'Developer / Admin', 'M or AI-G → M', 'T05 Part C'],
+      ['S5', 'Peer review and dry run in test; before/after evidence', 'Peer reviewer', 'M', 'T05 Part D', 'G5'],
+      ['S9', 'Execute under change record', 'Authorised admin', 'M', 'Change record'],
+      ['S9', 'Verify with requester; attach evidence; close', 'Requester, Triage Lead', 'M', 'T05 Part E', 'G9']
+    ];
+const RULES_NF = [
+      'A new module gets its prefix registered in CP-00 before S1 starts, so IDs are valid from the first requirement.',
+      'The first feature on a new surface or service creates that surface’s golden example (CP-99) during S3 and S4. The Architect reviews it; later features imitate it.',
+      'Any new shared component, validator or style class is added to CP-20, CP-21 or CP-23 in the same release, through T14.',
+      'Architecture spikes may use AI freely, but spike code is never merged. Findings are recorded in T03.',
+      'Non-functional baselines are fixed at S1: asset volumes, depreciation run window, month-end close time, mobile offline duration.'
+    ];
+const RULES_CR = [
+      'No CR is approved without a completed T04. AI may search the RTM and code for impact, but the Architect confirms every impacted item.',
+      'A changed requirement keeps its ID with a revision suffix (DEP-REQ-214.r2). New behaviour gets a new ID. Retired requirements are marked retired, never deleted.',
+      'The SFVD is updated in place with change marks and a minor version bump; the revision table lists the CR ID and changed sections.',
+      'Regression selection: AI proposes impacted cases from the RTM and the changed files; the QA Lead confirms. The minimum is impacted cases plus smoke plus the critical-path pack (depreciation run, month-end close, label print, verification sync).',
+      'Mobile apps in the field cannot all be updated at once. APIs must keep serving the previous mobile release (N-1) until the Council retires it.',
+      'For changed financial rules, the PO and Finance decide whether the change is prospective or retrospective. A retrospective change needs Finance approval recorded in T04.'
+    ];
+const RULES_SR = [
+      'Reproduce first. The failing test is committed before the fix and stays in the regression pack.',
+      'Root cause analysis is always manual (AI-X). AI may summarise logs to help, but the cause is written by the engineer.',
+      'Every RCA names the gate that should have caught the defect. That gate’s checklist, the Context Pack or the regression pack is improved, or a waiver is logged.',
+      'Hotfix branches are cut from the release tag and merged back to the main branch after release.',
+      'Scripts that change cost, accumulated depreciation or NBV are AI-X, need two reviewers and a dry run on a production-like copy.',
+      'Production data and configuration are changed only by an authorised admin under a change record, never directly by a developer.',
+      'A service request that needs code, or that reveals a defect, is re-routed as a CR or a defect.'
+    ];
+const CR_CLASS = [
+      ['Minor', 'No contract or schema change; one surface; estimated at five working days or fewer', 'S3 not run; design notes recorded in T04 section 6. S6 and S7 delta.'],
+      ['Major', 'Contract or schema change; more than one surface; more than five working days; any change to a financial calculation', 'S3 run in full with contract versioning and migration review. SME re-derivation mandatory at S6.']
+    ];
+const EVIDENCE = [
+      ['AI Usage Declaration and assumption register (T11)', 'Attached to the artifact or the pull request', 'Life of the release + audit period'],
+      ['Gate record (T10)', 'Jira gate transition + X01 Gate Log', 'Life of the product'],
+      ['Pipeline results (L1)', 'Jenkins build linked from the pull request', 'Per Jenkins retention, linked from T10'],
+      ['Review comments (L3)', 'Pull request or document comments', 'Life of the release'],
+      ['Frozen RTM per release', 'X01, versioned with the release', 'Life of the product'],
+      ['Waivers (T15)', 'Council folder + X01 Waiver Register', 'Life of the product']
+    ];
+const REJECTION_STEPS = [
+      'The reviewer records the rejection and the reason in T10 (decision “Reject”) and in the Jira item.',
+      'The AI operator classifies the cause: wrong or ambiguous input, missing or wrong context, prompt not followed, or genuine model error.',
+      'Wrong input: return it to the previous stage owner. The previous gate is re-opened if needed.',
+      'Missing or wrong context: raise T14 to fix the Context Pack, then regenerate.',
+      'Prompt not followed or model error: correct manually or regenerate; note it in T11.',
+      'The corrected output goes through the full verification again. It is never accepted on the strength of the previous review.',
+      'Repeated rejections for the same cause are reported to the Council through the monthly metrics.'
+    ];
+const CP_LOADING = [
+      'The pack lives at /ai-context in the main repository, so it is versioned, reviewed and branched like code.',
+      'AI-INSTRUCTIONS.md at the repository root states the binding rules and points to /ai-context. Each approved AI tool has a one-line pointer file in the location that tool reads automatically, so whichever approved tool is used loads the same rules.',
+      'The current version is held in /ai-context/VERSION and is recorded in T11, in the pull request description and in every T10 gate record.',
+      'Surface profiles are selected in the prompt (“profile: microservice”, “profile: mobile”, “profile: internal web”).'
+    ];
+const CP_CHANGE = [
+      'Anyone raises T14 describing the gap, with an example of the wrong AI output it causes.',
+      'The file owner drafts the change as a pull request to /ai-context.',
+      'Two approvals are required: the file owner and one Council member.',
+      'On merge, VERSION is bumped (minor for additions, major for rule changes) and a short note goes to all three surface teams the same day.',
+      'Target lead time from T14 to merge: five working days. Lead time is reported monthly.'
+    ];
+const ID_WHERE = [
+      ['REQ-ID', 'T01 register, Jira story, SFVD screen and field rows, OpenAPI x-req-ids, branch name, commit message, test case, release note line'],
+      ['CR ID', 'T04, Jira CR, revision note of each affected REQ, SFVD revision table, release note'],
+      ['SR / BUG ID', 'T05 or T06, branch name, commit message, failing test name, release note'],
+      ['Test case ID', 'T07, test management tool, automation script annotation, RTM'],
+      ['Context Pack version', 'T11, pull request description, T10 gate record'],
+      ['Prompt template version', 'T11']
+    ];
+const ID_CHECKS = [
+      'A commit-message check (Git hook and Jenkins stage) rejects commits without a valid ID.',
+      'OpenAPI lint requires an x-req-ids tag on every new or changed operation.',
+      'A nightly job rebuilds the RTM in X01 from Jira, Git and the test management tool, and flags requirements without code or passed tests.',
+      'The release job fails if any requirement in scope lacks a passed test, or if the parity check does not reconcile.'
+    ];
+const COUNCIL = [
+      ['Members', 'Solution Architect (chair), QA Lead, Delivery Manager, Security Lead. Product Owner attends for scope or business-rule topics.'],
+      ['Owns', 'This document, the Context Pack, gate thresholds, the approved AI tool list, waivers, audits and metrics.'],
+      ['Weekly (30 minutes)', 'Open T14 and T15 items, gate exceptions, pilot feedback.'],
+      ['Monthly', 'Drift audit: a 10% sample of AI-assisted merges scored against the T10 checklists. Metrics review (9.5).'],
+      ['Quarterly', 'Refresh golden examples and prompt templates; review thresholds; retire stale context.'],
+      ['Every release', 'RTM frozen; open waivers reviewed and cleared or renewed.']
+    ];
+const WAIVER_RULES = [
+      'Any deviation from a rule or gate needs a T15 waiver: what is waived, why, the risk, the owner and an expiry no later than 90 days.',
+      'Only the Council approves a waiver. Schedule pressure alone is not a reason.',
+      'For a P1 incident the Delivery Manager and Architect may approve verbally; the T15 is completed within two working days.',
+      'Waivers are logged in X01 and reviewed at every release.'
+    ];
+const CONFIG_ARTIFACTS = [
+      ['Pull request template (T09 as markdown)', 'Repository: pull request template location for your Git host', 'Every PR carries the checklist, IDs, AI usage and Context Pack version'],
+      ['Commit-message ID check', 'Git hook + Jenkins stage', 'No commit without a valid REQ, CR, SR or BUG ID'],
+      ['Jenkins quality stages', 'Jenkinsfile', 'PMD, Checkstyle, Sonar gate, coverage, duplication, OpenAPI diff, secret scan, ID check'],
+      ['Jenkins release stages', 'Release pipeline', 'RTM link check and parity check before promotion'],
+      ['Jira configuration', 'Jira administration', 'Work types, custom fields (Work Type, Module, Severity, AI Usage, CP Version), gate statuses that require a T10 attachment'],
+      ['Test management fields', 'Test management tool', 'REQ-ID link and automation flag on every case'],
+      ['AI-INSTRUCTIONS.md and tool pointer files', 'Repository root', 'Every approved AI tool loads the same rules and Context Pack']
+    ];
+const STORAGE = [
+      ['T01, T02, T03, T07, T08', 'Document repository /<module>/<release>/', '<ID>_<Txx>_v<x.y> e.g. SFVD-DEP-07_T02_v2.1', 'Minor for edits; major at gate baseline'],
+      ['T04, T05, T06', 'Attached to the Jira CR, SR or bug', '<CR/SR/BUG ID>_<Txx>', 'Single version, updated until closed'],
+      ['T09', 'Pull request description', '—', 'Pull request history'],
+      ['T10, T11', 'Jira gate transition; X01 logs', '<ID>_G<n>_T10, <ID>_T11', 'One per gate or AI use'],
+      ['T12, T13', 'Release folder', 'REL-<version>_<Txx>', 'One per release'],
+      ['T14, T15', 'Council folder; X01 registers', 'CPCR-<nnn>, WVR-<nnn>', 'One per request'],
+      ['Context Pack', 'Git /ai-context', 'As in section 7.2', 'CP v<major>.<minor> in VERSION']
+    ];
+const READINESS = [
+      'This document approved by the AI Governance Council',
+      'Council members named and the weekly slot booked',
+      '/ai-context created; every CP file at v1.0 with owner sections completed',
+      'AI-INSTRUCTIONS.md and the approved-tool pointer files committed',
+      'Approved AI tool list and AI data rules published in CP-40',
+      'Templates T01 to T15 published in the document repository',
+      'X01 tracker created for each product line',
+      'Jira issue types, fields and gate statuses configured',
+      'Branch naming and commit-message ID check enabled',
+      'Jenkins quality and release stages running in warning mode',
+      'Test management tool has REQ-ID and automation-flag fields',
+      'Pilot items chosen: one NF, one CR and one SR, covering all three surfaces between them',
+      'Team trained: awareness session for all; hands-on session per role'
+    ];
+const PHASES = [
+      ['0 Mobilise', '1 – 2', 'Approve this document; form the Council; create /ai-context; publish templates', 'Readiness items 1 to 6 complete'],
+      ['1 Foundation', '3 – 4', 'Context Pack v1.0; stage prompts; Jira, Git and Jenkins configured in warning mode; training', 'All readiness items complete'],
+      ['2 Pilot', '5 – 8', 'One NF, one CR and one SR through the full process; weekly retrospective; Context Pack v1.1', 'Three pilots closed at G9 with complete evidence'],
+      ['3 Enforce', '9 – 12', 'Gates blocking; all new work on the process; first monthly audit', 'Audit shows at least 90% checklist compliance'],
+      ['4 Sustain', 'Ongoing', 'Quarterly refresh; metrics reviewed monthly', 'Metrics on target for two consecutive quarters']
+    ];
+const JIRA_FLOW = [
+      ['Intake', 'S0', 'Work type, module, requester, severity (issues)'],
+      ['Requirements', 'S1', 'G0 record; T04 for CRs; T06 for defects'],
+      ['Specification', 'S2', 'G1 record (T10) attached'],
+      ['Design', 'S3', 'G2 record; skipped for Minor CR and SR without contract change'],
+      ['In development', 'S4', 'G3 record or approved skip'],
+      ['In review', 'S5', 'Pull request linked; CI green (G4)'],
+      ['Test design', 'S6 (sub-task)', 'Starts at G2; closes with G6 record'],
+      ['In test', 'S7', 'G5 and G6 records'],
+      ['Release ready', 'S8', 'G7 record; parity report'],
+      ['Deployed', 'S9', 'G8 record; release note'],
+      ['Closed', '—', 'G9 record; RTM frozen']
+    ];
+const EXAMPLES = [
+{ title: 'A.1  New feature: RFID scanning for physical verification (mobile)', intro: 'Finance Operations want field staff to verify assets with handheld RFID readers instead of barcode scans.', rows: [
+      ['S0', 'Classified NF in the LBL module; mobile and verification service affected', 'Jira epic', 'M'],
+      ['S1', 'AI drafted 14 requirements from a three-page note. Reconciliation removed 2 invented ones (offline photo upload) and added 1 missed (resume a partial scan). SME confirmed verification statuses.', 'LBL-REQ-101 to 114', 'AI-G → M'],
+      ['S2', 'SFVD for six mobile screens. Registry lookup rejected three invented error codes; reuse of the shared scan component confirmed.', 'SFVD-LBL-04 v1.0', 'AI-G → M'],
+      ['S3', 'New batch verification endpoint; OpenAPI diff showed an additive change only; offline sync queue approved.', 'T03, contract v1.4', 'AI-G → M'],
+      ['S6', '61 cases drafted; 7 duplicates of existing regression removed; SME verified discrepancy rules.', 'T07, T08', 'AI-G → M'],
+      ['S4–S5', 'Five pull requests under 400 lines. Reviewer rejected a new date utility that duplicated an existing validator.', 'T09', 'AI-G → M'],
+      ['S7–S9', 'Parity: 54 automated + 7 manual = 61 approved. Released, smoke passed, RTM frozen.', 'T12, T13', 'AUTO + M']
+    ] },
+{ title: 'A.2  Change request: daily pro-rata depreciation for mid-year additions', intro: 'CR-2026-031 changes the written-down-value calculation so additions are depreciated from the day they are put to use.', rows: [
+      ['S0–S1', 'AI searched the RTM and code; Architect confirmed impact on DEP-REQ-214, SFVD-DEP-07 section 4.2 and the calculation engine. Classified Major (financial calculation). Finance approved prospective application.', 'T04', 'M + AI-A'],
+      ['S2', 'SFVD section 4.2 updated with change marks; v2.0 to v2.1; DEP-REQ-214 revised to .r2.', 'T02 delta', 'AI-G → M'],
+      ['S6', 'AI proposed 38 regression cases from the RTM; QA Lead added month-end close. SME hand-calculated three scenarios, including a leap-year addition.', 'T07', 'AI-G + AI-A → M'],
+      ['S4–S9', 'Code change reviewed for backward compatibility; regression passed; released as a minor version.', 'T09, T12', 'AI-G → M']
+    ] },
+{ title: 'A.3  Defect (P2): duplicate depreciation entries for transferred assets', intro: 'BUG-DEP-118: assets transferred mid-month received two depreciation postings.', rows: [
+      ['S0', 'Triage reproduced the defect; severity P2 (financial misstatement contained before close).', 'T05', 'M + AI-A'],
+      ['S1', 'Manual RCA: the transfer event consumer was not idempotent. Gate missed: S6 had no transfer-within-period case.', 'T06', 'AI-X'],
+      ['S4–S5', 'Failing test committed first; fix written manually; two engineers and the Architect reviewed.', 'T09', 'M'],
+      ['S8–S9', 'Hotfix release with targeted and regression tests. Preventive actions: idempotency rule added to CP-10, transfer pattern added to CP-30 via T14.', 'T12, T14', 'M']
+    ] },
+{ title: 'A.4  Service request: correct useful life for 42 assets', intro: 'SR-2026-00412: 42 assets in the class “Computers” were registered with the wrong useful life.', rows: [
+      ['S0', 'Classified as a data-correction SR. Changes future depreciation, so it is a financial-value change.', 'T05 Part A', 'M'],
+      ['S4', 'Script written manually (AI-X because it changes financial values), with a rollback script.', 'T05 Part C', 'AI-X'],
+      ['S5', 'Two reviewers; dry run on a production-like copy; before and after extracts compared.', 'T05 Part D', 'M'],
+      ['S9', 'Executed by an authorised admin under a change record; next depreciation run verified with Finance.', 'T05 Part E', 'M']
+    ] }
+];
+const PRINCIPLES = [
+  ['AI drafts, a person decides, the gate records.', 'AI output is never a deliverable as generated. It becomes one only when a named reviewer accepts it and the gate is recorded in T10.'],
+  ['Context is shared, never personal.', 'Standards, structure, shared libraries, style classes, registries and test data live in one versioned Context Pack that every prompt loads.'],
+  ['Nothing moves without an ID.', 'Every artifact, commit, test case and defect carries its requirement, CR or SR ID. If it is not linked it does not ship.'],
+  ['Reuse before create.', 'A new utility, base method, style class, validation ID or service is justified in writing, or it is not created.'],
+  ['Evidence or it did not happen.', 'A gate passes only with a recorded artifact: checklist, scan result, approval. Verbal sign-off is not a gate.']
+];
+
+module.exports = { AUDIENCE, GLOSSARY, CLASS_RULES, AI_RULES, STEPS_NF, STEPS_CR, STEPS_DEFECT, STEPS_SERVICE, RULES_NF, RULES_CR, RULES_SR, CR_CLASS, EVIDENCE, REJECTION_STEPS, CP_LOADING, CP_CHANGE, ID_WHERE, ID_CHECKS, COUNCIL, WAIVER_RULES, CONFIG_ARTIFACTS, STORAGE, READINESS, PHASES, JIRA_FLOW, EXAMPLES, PRINCIPLES, DOC_MAP, MODES, WORK_TYPES, STAGES, TAILORING, TAILOR_KEY, SEVERITY, SR_TYPES, TECHNIQUES, UNIVERSAL_CHECKLIST, DOMAIN_CHECKS, TEMPLATES, CONTEXT_PACK, ID_CONVENTIONS, ROLES, RACI_ROLES, RACI, METRICS, AI_PERMISSIONS };

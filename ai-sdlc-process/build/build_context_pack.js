@@ -274,7 +274,7 @@ D.STAGES.forEach(s => w(`CP-50-prompt-templates/P-${s.id}.md`, `# P-${s.id} v1 �
 Mode: ${s.activities.filter(a => a[2] === 'AG' || a[2] === 'AA').map(a => D.MODES[a[2]].code).filter((v, i, a) => a.indexOf(v) === i).join(', ') || 'AI-A'} · Gate: ${s.gate} · Owner of output: ${s.raci.R}
 
 \`\`\`text
-ROLE:          You are a senior ${s.raci.R.toLowerCase()} on the Fixed Assets suite (profile: <microservice | mobile | internal web>).
+ROLE:          You are an experienced ${s.raci.R} on the Fixed Assets suite (profile: <microservice | mobile | internal web>).
 CONTEXT:       Load /ai-context at <CP version>. Treat every file as binding, not advisory.
 INPUT:         <approved artifact IDs and versions — referenced, not retyped>
 TASK:          ${tasks[s.id]} Nothing else.

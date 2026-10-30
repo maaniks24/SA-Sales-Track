@@ -27,24 +27,9 @@ function sec6() {
     P('Fixed-asset accounting is where AI output most often looks right and is wrong. When an artifact touches these areas, the domain SME re-derives at least two scenarios independently (technique V7). The exact rules come from the company’s accounting policy; this list says where to look.'),
     table(['Area', 'What to re-derive or verify'], D.DOMAIN_CHECKS, [2600, CW - 2600], { boldCols: [0] }),
     H2('6.5  Handling rejected AI output'),
-    ...numbered([
-      'The reviewer records the rejection and the reason in T10 (decision “Reject”) and in the Jira item.',
-      'The AI operator classifies the cause: wrong or ambiguous input, missing or wrong context, prompt not followed, or genuine model error.',
-      'Wrong input: return it to the previous stage owner. The previous gate is re-opened if needed.',
-      'Missing or wrong context: raise T14 to fix the Context Pack, then regenerate.',
-      'Prompt not followed or model error: correct manually or regenerate; note it in T11.',
-      'The corrected output goes through the full verification again. It is never accepted on the strength of the previous review.',
-      'Repeated rejections for the same cause are reported to the Council through the monthly metrics.'
-    ]),
+    ...numbered(D.REJECTION_STEPS),
     H2('6.6  Evidence to retain'),
-    table(['Evidence', 'Where it lives', 'Retention'], [
-      ['AI Usage Declaration and assumption register (T11)', 'Attached to the artifact or the pull request', 'Life of the release + audit period'],
-      ['Gate record (T10)', 'Jira gate transition + X01 Gate Log', 'Life of the product'],
-      ['Pipeline results (L1)', 'Jenkins build linked from the pull request', 'Per Jenkins retention, linked from T10'],
-      ['Review comments (L3)', 'Pull request or document comments', 'Life of the release'],
-      ['Frozen RTM per release', 'X01, versioned with the release', 'Life of the product'],
-      ['Waivers (T15)', 'Council folder + X01 Waiver Register', 'Life of the product']
-    ], [3800, 3500, CW - 7300])
+    table(['Evidence', 'Where it lives', 'Retention'], D.EVIDENCE, [3800, 3500, CW - 7300])
   ];
 }
 
@@ -71,20 +56,9 @@ function sec7() {
     table(['File', 'Content', 'Owner', 'Update trigger'], D.CONTEXT_PACK, [2900, 4100, 1300, CW - 8300], { boldCols: [0] }),
     P([['Starter versions of every file, with the sections each owner must complete, are provided in the ai-context folder of this package.', { italics: true, color: COL.muted }]]),
     H2('7.3  How the pack is loaded'),
-    ...bullets([
-      'The pack lives at /ai-context in the main repository, so it is versioned, reviewed and branched like code.',
-      'AI-INSTRUCTIONS.md at the repository root states the binding rules and points to /ai-context. Each approved AI tool has a one-line pointer file in the location that tool reads automatically, so whichever approved tool is used loads the same rules.',
-      'The current version is held in /ai-context/VERSION and is recorded in T11, in the pull request description and in every T10 gate record.',
-      'Surface profiles are selected in the prompt (“profile: microservice”, “profile: mobile”, “profile: internal web”).'
-    ]),
+    ...bullets(D.CP_LOADING),
     H2('7.4  Change control'),
-    ...numbered([
-      'Anyone raises T14 describing the gap, with an example of the wrong AI output it causes.',
-      'The file owner drafts the change as a pull request to /ai-context.',
-      'Two approvals are required: the file owner and one Council member.',
-      'On merge, VERSION is bumped (minor for additions, major for rule changes) and a short note goes to all three surface teams the same day.',
-      'Target lead time from T14 to merge: five working days. Lead time is reported monthly.'
-    ]),
+    ...numbered(D.CP_CHANGE),
     H2('7.5  Standard stage prompt structure'),
     P('Every prompt for a deliverable uses the eight blocks below. The stage templates in CP-50 pre-fill blocks 1, 2, 5, 6 and 8; the AI operator completes blocks 3, 4 and 7.'),
     table(['#', 'Block', 'Purpose'], [
@@ -112,21 +86,9 @@ function sec8() {
     H2('8.2  ID conventions'),
     table(['Item', 'Format', 'Example'], D.ID_CONVENTIONS, [2000, 4800, CW - 6800], { boldCols: [0] }),
     H2('8.3  Where each ID must appear'),
-    table(['ID', 'Must appear in'], [
-      ['REQ-ID', 'T01 register, Jira story, SFVD screen and field rows, OpenAPI x-req-ids, branch name, commit message, test case, release note line'],
-      ['CR ID', 'T04, Jira CR, revision note of each affected REQ, SFVD revision table, release note'],
-      ['SR / BUG ID', 'T05 or T06, branch name, commit message, failing test name, release note'],
-      ['Test case ID', 'T07, test management tool, automation script annotation, RTM'],
-      ['Context Pack version', 'T11, pull request description, T10 gate record'],
-      ['Prompt template version', 'T11']
-    ], [2300, CW - 2300], { boldCols: [0] }),
+    table(['ID', 'Must appear in'], D.ID_WHERE, [2300, CW - 2300], { boldCols: [0] }),
     H2('8.4  Automated traceability checks'),
-    ...bullets([
-      'A commit-message check (Git hook and Jenkins stage) rejects commits without a valid ID.',
-      'OpenAPI lint requires an x-req-ids tag on every new or changed operation.',
-      'A nightly job rebuilds the RTM in X01 from Jira, Git and the test management tool, and flags requirements without code or passed tests.',
-      'The release job fails if any requirement in scope lacks a passed test, or if the parity check does not reconcile.'
-    ])
+    ...bullets(D.ID_CHECKS)
   ];
 }
 
@@ -145,21 +107,9 @@ function sec9() {
     spacer(),
     callout('Separation of duties', ['The person who ran the AI prompt for an output is never the person who signs the L3 review or the gate for that output.'], { color: COL.rust, fill: 'FBF0EC' }),
     H2('9.3  AI Governance Council'),
-    table(['Item', 'Definition'], [
-      ['Members', 'Solution Architect (chair), QA Lead, Delivery Manager, Security Lead. Product Owner attends for scope or business-rule topics.'],
-      ['Owns', 'This document, the Context Pack, gate thresholds, the approved AI tool list, waivers, audits and metrics.'],
-      ['Weekly (30 minutes)', 'Open T14 and T15 items, gate exceptions, pilot feedback.'],
-      ['Monthly', 'Drift audit: a 10% sample of AI-assisted merges scored against the T10 checklists. Metrics review (9.5).'],
-      ['Quarterly', 'Refresh golden examples and prompt templates; review thresholds; retire stale context.'],
-      ['Every release', 'RTM frozen; open waivers reviewed and cleared or renewed.']
-    ], [2300, CW - 2300], { boldCols: [0] }),
+    table(['Item', 'Definition'], D.COUNCIL, [2300, CW - 2300], { boldCols: [0] }),
     H2('9.4  Waivers and escalation'),
-    ...bullets([
-      'Any deviation from a rule or gate needs a T15 waiver: what is waived, why, the risk, the owner and an expiry no later than 90 days.',
-      'Only the Council approves a waiver. Schedule pressure alone is not a reason.',
-      'For a P1 incident the Delivery Manager and Architect may approve verbally; the T15 is completed within two working days.',
-      'Waivers are logged in X01 and reviewed at every release.'
-    ]),
+    ...bullets(D.WAIVER_RULES),
     H2('9.5  Metrics'),
     table(['Metric', 'Definition', 'Target', 'Reviewed'], D.METRICS, [2600, 4100, 1500, CW - 8200], { boldCols: [0] }),
     P([['Baselines are measured in the first pilot month. Targets marked “trend” are judged on direction, not an absolute number.', { italics: true, color: COL.muted, size: 18 }]])
@@ -186,25 +136,9 @@ function sec10land() {
 function sec10b() {
   return [
     H2('10.3  Configuration artifacts', { newPage: false }),
-    table(['Artifact', 'Where', 'What it enforces'], [
-      ['Pull request template (T09 as markdown)', 'Repository: pull request template location for your Git host', 'Every PR carries the checklist, IDs, AI usage and Context Pack version'],
-      ['Commit-message ID check', 'Git hook + Jenkins stage', 'No commit without a valid REQ, CR, SR or BUG ID'],
-      ['Jenkins quality stages', 'Jenkinsfile', 'PMD, Checkstyle, Sonar gate, coverage, duplication, OpenAPI diff, secret scan, ID check'],
-      ['Jenkins release stages', 'Release pipeline', 'RTM link check and parity check before promotion'],
-      ['Jira configuration', 'Jira administration', 'Work types, custom fields (Work Type, Module, Severity, AI Usage, CP Version), gate statuses that require a T10 attachment'],
-      ['Test management fields', 'Test management tool', 'REQ-ID link and automation flag on every case'],
-      ['AI-INSTRUCTIONS.md and tool pointer files', 'Repository root', 'Every approved AI tool loads the same rules and Context Pack']
-    ], [2900, 2900, CW - 5800], { boldCols: [0] }),
+    table(['Artifact', 'Where', 'What it enforces'], D.CONFIG_ARTIFACTS, [2900, 2900, CW - 5800], { boldCols: [0] }),
     H2('10.4  Storage, naming and versioning'),
-    table(['Document', 'Location', 'File name', 'Versioning'], [
-      ['T01, T02, T03, T07, T08', 'Document repository /<module>/<release>/', '<ID>_<Txx>_v<x.y> e.g. SFVD-DEP-07_T02_v2.1', 'Minor for edits; major at gate baseline'],
-      ['T04, T05, T06', 'Attached to the Jira CR, SR or bug', '<CR/SR/BUG ID>_<Txx>', 'Single version, updated until closed'],
-      ['T09', 'Pull request description', '—', 'Pull request history'],
-      ['T10, T11', 'Jira gate transition; X01 logs', '<ID>_G<n>_T10, <ID>_T11', 'One per gate or AI use'],
-      ['T12, T13', 'Release folder', 'REL-<version>_<Txx>', 'One per release'],
-      ['T14, T15', 'Council folder; X01 registers', 'CPCR-<nnn>, WVR-<nnn>', 'One per request'],
-      ['Context Pack', 'Git /ai-context', 'As in section 7.2', 'CP v<major>.<minor> in VERSION']
-    ], [2200, 2700, 2800, CW - 7700], { boldCols: [0] })
+    table(['Document', 'Location', 'File name', 'Versioning'], D.STORAGE, [2200, 2700, 2800, CW - 7700], { boldCols: [0] })
   ];
 }
 
@@ -214,43 +148,11 @@ function sec11() {
     H1('11  Implementation'),
     P('The process is introduced in phases so delivery does not stop. Gates start in warning mode and become blocking only after the pilot has tuned them. The implementation deck that accompanies this document explains each step to the team.'),
     H2('11.1  Readiness checklist'),
-    checklist([
-      'This document approved by the AI Governance Council',
-      'Council members named and the weekly slot booked',
-      '/ai-context created; every CP file at v1.0 with owner sections completed',
-      'AI-INSTRUCTIONS.md and the approved-tool pointer files committed',
-      'Approved AI tool list and AI data rules published in CP-40',
-      'Templates T01 to T15 published in the document repository',
-      'X01 tracker created for each product line',
-      'Jira issue types, fields and gate statuses configured',
-      'Branch naming and commit-message ID check enabled',
-      'Jenkins quality and release stages running in warning mode',
-      'Test management tool has REQ-ID and automation-flag fields',
-      'Pilot items chosen: one NF, one CR and one SR, covering all three surfaces between them',
-      'Team trained: awareness session for all; hands-on session per role'
-    ], { title: 'Ready to start the pilot when all are true', evidence: true }),
+    checklist(D.READINESS, { title: 'Ready to start the pilot when all are true', evidence: true }),
     H2('11.2  Roll-out phases'),
-    table(['Phase', 'Weeks', 'Outcomes', 'Exit criterion'], [
-      ['0 Mobilise', '1 – 2', 'Approve this document; form the Council; create /ai-context; publish templates', 'Readiness items 1 to 6 complete'],
-      ['1 Foundation', '3 – 4', 'Context Pack v1.0; stage prompts; Jira, Git and Jenkins configured in warning mode; training', 'All readiness items complete'],
-      ['2 Pilot', '5 – 8', 'One NF, one CR and one SR through the full process; weekly retrospective; Context Pack v1.1', 'Three pilots closed at G9 with complete evidence'],
-      ['3 Enforce', '9 – 12', 'Gates blocking; all new work on the process; first monthly audit', 'Audit shows at least 90% checklist compliance'],
-      ['4 Sustain', 'Ongoing', 'Quarterly refresh; metrics reviewed monthly', 'Metrics on target for two consecutive quarters']
-    ], [1500, 900, 4600, CW - 7000], { boldCols: [0] }),
+    table(['Phase', 'Weeks', 'Outcomes', 'Exit criterion'], D.PHASES, [1500, 900, 4600, CW - 7000], { boldCols: [0] }),
     H2('11.3  Jira workflow and gates'),
-    table(['Jira status', 'Stage', 'Transition requires'], [
-      ['Intake', 'S0', 'Work type, module, requester, severity (issues)'],
-      ['Requirements', 'S1', 'G0 record; T04 for CRs; T06 for defects'],
-      ['Specification', 'S2', 'G1 record (T10) attached'],
-      ['Design', 'S3', 'G2 record; skipped for Minor CR and SR without contract change'],
-      ['In development', 'S4', 'G3 record or approved skip'],
-      ['In review', 'S5', 'Pull request linked; CI green (G4)'],
-      ['Test design', 'S6 (sub-task)', 'Starts at G2; closes with G6 record'],
-      ['In test', 'S7', 'G5 and G6 records'],
-      ['Release ready', 'S8', 'G7 record; parity report'],
-      ['Deployed', 'S9', 'G8 record; release note'],
-      ['Closed', '—', 'G9 record; RTM frozen']
-    ], [2300, 1600, CW - 3900], { boldCols: [0] })
+    table(['Jira status', 'Stage', 'Transition requires'], D.JIRA_FLOW, [2300, 1600, CW - 3900], { boldCols: [0] })
   ];
 }
 
@@ -260,33 +162,10 @@ function appA() {
   return [
     H1('Appendix A  Worked Examples'),
     callout('Illustrative only', ['These examples show how the process is applied. IDs, counts and findings are illustrative, not records of real work.'], { color: COL.slate, fill: 'EEF3F5' }),
-    ...ex('A.1  New feature: RFID scanning for physical verification (mobile)', 'Finance Operations want field staff to verify assets with handheld RFID readers instead of barcode scans.', [
-      ['S0', 'Classified NF in the LBL module; mobile and verification service affected', 'Jira epic', 'M'],
-      ['S1', 'AI drafted 14 requirements from a three-page note. Reconciliation removed 2 invented ones (offline photo upload) and added 1 missed (resume a partial scan). SME confirmed verification statuses.', 'LBL-REQ-101 to 114', 'AI-G → M'],
-      ['S2', 'SFVD for six mobile screens. Registry lookup rejected three invented error codes; reuse of the shared scan component confirmed.', 'SFVD-LBL-04 v1.0', 'AI-G → M'],
-      ['S3', 'New batch verification endpoint; OpenAPI diff showed an additive change only; offline sync queue approved.', 'T03, contract v1.4', 'AI-G → M'],
-      ['S6', '61 cases drafted; 7 duplicates of existing regression removed; SME verified discrepancy rules.', 'T07, T08', 'AI-G → M'],
-      ['S4–S5', 'Five pull requests under 400 lines. Reviewer rejected a new date utility that duplicated an existing validator.', 'T09', 'AI-G → M'],
-      ['S7–S9', 'Parity: 54 automated + 7 manual = 61 approved. Released, smoke passed, RTM frozen.', 'T12, T13', 'AUTO + M']
-    ]),
-    ...ex('A.2  Change request: daily pro-rata depreciation for mid-year additions', 'CR-2026-031 changes the written-down-value calculation so additions are depreciated from the day they are put to use.', [
-      ['S0–S1', 'AI searched the RTM and code; Architect confirmed impact on DEP-REQ-214, SFVD-DEP-07 section 4.2 and the calculation engine. Classified Major (financial calculation). Finance approved prospective application.', 'T04', 'M + AI-A'],
-      ['S2', 'SFVD section 4.2 updated with change marks; v2.0 to v2.1; DEP-REQ-214 revised to .r2.', 'T02 delta', 'AI-G → M'],
-      ['S6', 'AI proposed 38 regression cases from the RTM; QA Lead added month-end close. SME hand-calculated three scenarios, including a leap-year addition.', 'T07', 'AI-G + AI-A → M'],
-      ['S4–S9', 'Code change reviewed for backward compatibility; regression passed; released as a minor version.', 'T09, T12', 'AI-G → M']
-    ]),
-    ...ex('A.3  Defect (P2): duplicate depreciation entries for transferred assets', 'BUG-DEP-118: assets transferred mid-month received two depreciation postings.', [
-      ['S0', 'Triage reproduced the defect; severity P2 (financial misstatement contained before close).', 'T05', 'M + AI-A'],
-      ['S1', 'Manual RCA: the transfer event consumer was not idempotent. Gate missed: S6 had no transfer-within-period case.', 'T06', 'AI-X'],
-      ['S4–S5', 'Failing test committed first; fix written manually; two engineers and the Architect reviewed.', 'T09', 'M'],
-      ['S8–S9', 'Hotfix release with targeted and regression tests. Preventive actions: idempotency rule added to CP-10, transfer pattern added to CP-30 via T14.', 'T12, T14', 'M']
-    ]),
-    ...ex('A.4  Service request: correct useful life for 42 assets', 'SR-2026-00412: 42 assets in the class “Computers” were registered with the wrong useful life.', [
-      ['S0', 'Classified as a data-correction SR. Changes future depreciation, so it is a financial-value change.', 'T05 Part A', 'M'],
-      ['S4', 'Script written manually (AI-X because it changes financial values), with a rollback script.', 'T05 Part C', 'AI-X'],
-      ['S5', 'Two reviewers; dry run on a production-like copy; before and after extracts compared.', 'T05 Part D', 'M'],
-      ['S9', 'Executed by an authorised admin under a change record; next depreciation run verified with Finance.', 'T05 Part E', 'M']
-    ])
+    ...ex(D.EXAMPLES[0].title, D.EXAMPLES[0].intro, D.EXAMPLES[0].rows),
+    ...ex(D.EXAMPLES[1].title, D.EXAMPLES[1].intro, D.EXAMPLES[1].rows),
+    ...ex(D.EXAMPLES[2].title, D.EXAMPLES[2].intro, D.EXAMPLES[2].rows),
+    ...ex(D.EXAMPLES[3].title, D.EXAMPLES[3].intro, D.EXAMPLES[3].rows)
   ];
 }
 function appB() {

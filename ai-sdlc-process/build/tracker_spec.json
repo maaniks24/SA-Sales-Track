@@ -1,0 +1,456 @@
+{
+ "sheets": [
+  {
+   "name": "RTM",
+   "title": "Requirement Traceability Matrix",
+   "cols": [
+    "REQ-ID",
+    "Revision",
+    "Requirement (short)",
+    "Module",
+    "Surface",
+    "Source (T01 ref)",
+    "Priority",
+    "SFVD ID and section",
+    "API operation(s)",
+    "Design note",
+    "Pull request(s)",
+    "Test case IDs",
+    "Number of test cases",
+    "Latest test result",
+    "Defects",
+    "Release",
+    "Status",
+    "Coverage check"
+   ],
+   "auto": [
+    "Coverage check"
+   ],
+   "example": [
+    "DEP-REQ-214",
+    "r2",
+    "Depreciate from put-to-use date (daily pro-rata)",
+    "DEP",
+    "Microservices",
+    "T01 B1",
+    "Must",
+    "SFVD-DEP-07 \u00a74.2",
+    "POST /assets/{id}/depreciation",
+    "T03 DEP-DN-05",
+    "PR 1182",
+    "TC-DEP-214-01..05",
+    "5",
+    "Pass",
+    "BUG-DEP-118",
+    "REL 4.7.0",
+    "Done"
+   ],
+   "notes": {
+    "Coverage check": "OK when the requirement has a pull request, at least one test case and a passing latest result. The release job must find no GAP rows in scope.",
+    "Revision": "Blank for the original requirement; r2, r3 for revisions made by a CR (process definition 5.2)."
+   },
+   "lists": {
+    "Module": [
+     "FAM",
+     "DEP",
+     "LBL",
+     "AUD",
+     "PLT"
+    ],
+    "Surface": [
+     "Microservices",
+     "Mobile",
+     "Internal web",
+     "Multiple"
+    ],
+    "Priority": [
+     "Must",
+     "Should",
+     "Could",
+     "Won't"
+    ],
+    "Latest test result": [
+     "Pass",
+     "Fail",
+     "Blocked",
+     "Not run"
+    ],
+    "Status": [
+     "Draft",
+     "Approved",
+     "In progress",
+     "Done",
+     "Retired"
+    ]
+   }
+  },
+  {
+   "name": "Gate Log",
+   "title": "Gate Log (one row per gate per work item)",
+   "cols": [
+    "Work item ID",
+    "Work type",
+    "Stage",
+    "Gate",
+    "Artifact",
+    "Version",
+    "Context Pack version",
+    "AI used",
+    "L1 result",
+    "L1 link",
+    "L2 checklist complete",
+    "AI operator",
+    "L3 reviewer",
+    "Reviewer is not operator",
+    "Decision",
+    "Gate owner",
+    "Date",
+    "Conditions / notes",
+    "Evidence complete"
+   ],
+   "auto": [
+    "Gate",
+    "Reviewer is not operator",
+    "Evidence complete"
+   ],
+   "example": [
+    "CR-2026-031",
+    "CR",
+    "S2",
+    null,
+    "SFVD-DEP-07",
+    "v2.1",
+    "CP v1.3",
+    "AI-G",
+    "Pass",
+    "jenkins/job/sfvd-check/412",
+    "Y",
+    "A. Rao",
+    "M. Iyer",
+    null,
+    "Approve",
+    "BA Lead",
+    "2026-11-04",
+    ""
+   ],
+   "notes": {
+    "Reviewer is not operator": "NO means the L3 reviewer ran the AI prompt. That violates separation of duties; the gate is invalid.",
+    "Evidence complete": "Yes only when L1 passed (or N/A), the L2 checklist is complete, the reviewer is independent where AI was used, and a decision is recorded."
+   },
+   "lists": {
+    "Work type": [
+     "NF",
+     "CR",
+     "SR"
+    ],
+    "Stage": [
+     "S0",
+     "S1",
+     "S2",
+     "S3",
+     "S4",
+     "S5",
+     "S6",
+     "S7",
+     "S8",
+     "S9"
+    ],
+    "AI used": [
+     "None",
+     "AI-A",
+     "AI-G"
+    ],
+    "L1 result": [
+     "Pass",
+     "Fail",
+     "N/A"
+    ],
+    "L2 checklist complete": [
+     "Y",
+     "N"
+    ],
+    "Decision": [
+     "Approve",
+     "Approve with conditions",
+     "Reject"
+    ]
+   }
+  },
+  {
+   "name": "AI Usage Log",
+   "title": "AI Usage Log (one row per T11 declaration)",
+   "cols": [
+    "Date",
+    "Artifact ID",
+    "Version",
+    "Stage",
+    "AI operator",
+    "Tool",
+    "Prompt template",
+    "Context Pack version",
+    "Sections generated",
+    "Assumptions declared",
+    "Unresolved at gate",
+    "Reviewer",
+    "T11 reference",
+    "Declared"
+   ],
+   "auto": [
+    "Declared"
+   ],
+   "example": [
+    "2026-11-03",
+    "SFVD-DEP-07",
+    "v2.1",
+    "S2",
+    "A. Rao",
+    "[approved tool]",
+    "P-S2 v3",
+    "CP v1.3",
+    "Sections 4.2, 5",
+    "6",
+    "0",
+    "M. Iyer",
+    "SFVD-DEP-07_T11"
+   ],
+   "notes": {
+    "Unresolved at gate": "Must be 0 when the gate is signed (process definition 9.5)."
+   },
+   "lists": {
+    "Stage": [
+     "S0",
+     "S1",
+     "S2",
+     "S3",
+     "S4",
+     "S5",
+     "S6",
+     "S7",
+     "S8",
+     "S9"
+    ]
+   }
+  },
+  {
+   "name": "Parity",
+   "title": "Automation Parity per Release",
+   "cols": [
+    "Release",
+    "Approved test cases",
+    "Executed manually",
+    "Automated",
+    "Formally deferred",
+    "Parity",
+    "Parity status"
+   ],
+   "auto": [
+    "Parity",
+    "Parity status"
+   ],
+   "example": [
+    "REL 5.0.0",
+    "61",
+    "7",
+    "54",
+    "0"
+   ],
+   "notes": {
+    "Executed manually": "Cases executed by hand and NOT automated. An automated case is counted only under Automated, so nothing is counted twice.",
+    "Formally deferred": "Only cases deferred in writing with a reason, owner and target release."
+   },
+   "lists": {}
+  },
+  {
+   "name": "Waivers",
+   "title": "Waiver Register (T15)",
+   "cols": [
+    "Waiver ID",
+    "Raised by",
+    "Date raised",
+    "Work item",
+    "Rule or gate waived",
+    "Reason",
+    "Risk",
+    "Compensating controls",
+    "Owner",
+    "Expiry date",
+    "Council decision",
+    "Status",
+    "Closed date",
+    "Days to expiry",
+    "Expiry flag",
+    "Within 90 days"
+   ],
+   "auto": [
+    "Days to expiry",
+    "Expiry flag",
+    "Within 90 days"
+   ],
+   "example": [
+    "WVR-007",
+    "Delivery Manager",
+    "2026-11-10",
+    "BUG-DEP-118",
+    "G7 full regression pack",
+    "P2 hotfix; targeted tests only",
+    "Medium",
+    "Full pack in next scheduled release",
+    "QA Lead",
+    "2026-12-10",
+    "Approved with conditions",
+    "Open",
+    ""
+   ],
+   "notes": {},
+   "lists": {
+    "Risk": [
+     "Low",
+     "Medium",
+     "High"
+    ],
+    "Council decision": [
+     "Approved",
+     "Approved with conditions",
+     "Rejected"
+    ],
+    "Status": [
+     "Open",
+     "Closed"
+    ]
+   }
+  },
+  {
+   "name": "CP Versions",
+   "title": "Context Pack Version Log",
+   "cols": [
+    "Version",
+    "Merge date",
+    "Files changed",
+    "T14 references",
+    "Earliest T14 raised",
+    "Lead time (working days)",
+    "Summary",
+    "Owner approval",
+    "Council approval",
+    "Broadcast date"
+   ],
+   "auto": [
+    "Lead time (working days)"
+   ],
+   "example": [
+    "CP v1.3",
+    "2026-11-12",
+    "CP-10, CP-30",
+    "CPCR-014, CPCR-015",
+    "2026-11-06",
+    null,
+    "Idempotency rule for event consumers; transfer-in-period test pattern",
+    "Architect",
+    "QA Lead",
+    "2026-11-12"
+   ],
+   "notes": {},
+   "lists": {}
+  },
+  {
+   "name": "Defect to Gate",
+   "title": "Defect to Gate Analysis (from T06)",
+   "cols": [
+    "BUG ID",
+    "Severity",
+    "Release found",
+    "Release introduced",
+    "Stage of origin",
+    "Gate that missed it",
+    "Why it was missed",
+    "Preventive action",
+    "Action type",
+    "Owner",
+    "Due date",
+    "T14 / checklist ref",
+    "Status"
+   ],
+   "auto": [],
+   "example": [
+    "BUG-DEP-118",
+    "P2",
+    "REL 4.7.0",
+    "REL 4.6.0",
+    "S4",
+    "G6",
+    "No transfer-within-period case in the suite",
+    "Add transfer pattern to CP-30; add idempotency rule to CP-10",
+    "Context Pack",
+    "QA Lead",
+    "2026-11-20",
+    "CPCR-014",
+    "Closed"
+   ],
+   "notes": {},
+   "lists": {
+    "Severity": [
+     "P1",
+     "P2",
+     "P3",
+     "P4"
+    ],
+    "Stage of origin": [
+     "S0",
+     "S1",
+     "S2",
+     "S3",
+     "S4",
+     "S5",
+     "S6",
+     "S7",
+     "S8",
+     "S9"
+    ],
+    "Gate that missed it": [
+     "G0",
+     "G1",
+     "G2",
+     "G3",
+     "G4",
+     "G5",
+     "G6",
+     "G7",
+     "G8",
+     "G9"
+    ],
+    "Action type": [
+     "Test",
+     "Checklist",
+     "Context Pack",
+     "Design",
+     "Training"
+    ],
+    "Status": [
+     "Open",
+     "In progress",
+     "Closed"
+    ]
+   }
+  }
+ ],
+ "readme": [
+  "X01  AI SDLC Tracker Workbook",
+  "Companion to PD-AISDLC-01, the AI-Augmented SDLC Process Definition. One workbook per product line and release train.",
+  "How to use",
+  "1. Enter data only in white cells. Grey cells and columns marked (auto) are formulas; do not overwrite them.",
+  "2. Row 5 on every sheet is an example in grey italics. Overwrite or delete it; it is excluded from the Metrics sheet.",
+  "3. Use the drop-down lists for coded columns so the formulas and filters work.",
+  "4. Where a nightly job can feed a sheet (RTM from Jira, Git and the test tool), paste or import into the white columns only.",
+  "Sheets",
+  "RTM \u2014 requirement traceability matrix. Coverage check flags any requirement without a PR, a test case or a passing result.",
+  "Gate Log \u2014 one row per gate (G0 to G9) per work item. Flags reviewer = AI operator and incomplete evidence.",
+  "AI Usage Log \u2014 one row per T11 declaration. Flags AI-generated artifacts without a declaration.",
+  "Parity \u2014 automation parity per release: approved = executed manually + automated + formally deferred.",
+  "Waivers \u2014 the T15 register with expiry tracking (90-day maximum).",
+  "CP Versions \u2014 Context Pack versions, the T14 requests they closed and the lead time.",
+  "Defect to Gate \u2014 which gate missed each defect and the preventive action (from T06).",
+  "Metrics \u2014 live summary of the Council metrics, calculated from the other sheets.",
+  "Owners",
+  "RTM: Business Analyst (rows) and QA Lead (test columns).  Gate Log and AI Usage Log: gate owners.  Parity: QA Lead.  Waivers, CP Versions, Defect to Gate, Metrics: AI Governance Council."
+ ]
+}

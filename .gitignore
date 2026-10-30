@@ -1,3 +1,5 @@
 node_modules/
 *.jpg
+!ai-sdlc-process/site/assets/deck/*.jpg
 ai-sdlc-process/build/build_impl_deck.js
+ai-sdlc-process/build/deck_cache/

@@ -10,8 +10,30 @@ microservices, mobile application, internal web applications).
 | `templates/X01-AI-SDLC-Tracker.xlsx` | Tracker workbook: RTM with coverage check, Gate Log (flags reviewer = AI operator), AI Usage Log, Parity, Waivers, Context Pack versions, Defect-to-Gate, live Metrics. |
 | `ai-context/` | Context Pack starter: `AI-INSTRUCTIONS.md`, CP-00 to CP-99 with `OWNER TO COMPLETE` blocks, ten stage prompts (`CP-50-prompt-templates/P-S0…P-S9.md`), CP-60 checklists, and the pull request template. Copy to the repository root as `/ai-context`. |
 | `presentation/AI-SDLC-Process-Implementation.pptx` | 39-slide briefing that explains the process and how to implement it here (Jira, Git, Jenkins, roles, governance, roll-out, pilot, first 30 days). Speaker notes on every content slide. |
+| `site/` | **The AI SDLC Process Portal**: the whole process as navigable web pages, with every document and template viewable online and downloadable from the stage where it is used. Open `site/index.html`. |
 | `diagrams/` | The ten process diagrams as SVG and PNG. |
 | `build/` | Generators. `process_data.js` is the single source of truth for stages, checklists, templates and rules. |
+
+## The web portal (`site/`)
+A self-contained static site: no server code, no database, and nothing for the people using it to install.
+
+- **Navigation:** a sidebar that follows the process (start, process, ten stages, three work-type flows, assurance,
+  context, people, documents, templates, roll-out); breadcrumbs; previous/next on every page; an on-page index;
+  clickable stage boxes on the diagrams.
+- **Help and tooltips:** a help dialog (`?` key), a How-to page, and tooltips on every mode tag, gate, template,
+  stage, Context Pack file and validation technique code. Those codes are also links.
+- **Search:** finds stages, templates, roles and terms (`/` key).
+- **View or download:** every stage page lists its documents with *View* (read-only web view) and *Download*.
+  The document library filters all documents by stage and work type. The deck has a slide viewer.
+- **Working aids:** stage checklists you can tick (saved in your own browser only, not a gate record), activity
+  filters for manual versus AI steps, copy buttons for the stage prompts and ID formats, light and dark themes.
+
+**Hosting.** Copy the `site/` folder to any static web host: IIS, nginx or Apache, internal Git pages, or a shared
+drive (opening `index.html` directly also works). SharePoint document libraries usually download `.html` files
+instead of showing them, so use a web server or site-pages location there. Fonts come from Google Fonts when
+reachable and fall back to Cambria, Calibri and Consolas otherwise. Rebuild with `node build/build_site2.js`
+after any change; `node build/build_site2.js --preview <dir>` produces the copy published on claude.ai, where
+downloads are switched off because claude.ai blocks file downloads.
 
 ## Rebuilding
 Edit `build/process_data.js` (or a builder), then run `build/build.sh`. The document, templates,

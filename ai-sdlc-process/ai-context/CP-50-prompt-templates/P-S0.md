@@ -3,7 +3,7 @@
 Mode: AI-A · Gate: G0 · Owner of output: BA / Triage Lead
 
 ```text
-ROLE:          You are a senior ba / triage lead on the Fixed Assets suite (profile: <microservice | mobile | internal web>).
+ROLE:          You are an experienced BA / Triage Lead on the Fixed Assets suite (profile: <microservice | mobile | internal web>).
 CONTEXT:       Load /ai-context at <CP version>. Treat every file as binding, not advisory.
 INPUT:         <approved artifact IDs and versions — referenced, not retyped>
 TASK:          Summarise the request below into an intake summary and list possible duplicate items from the RTM extract provided. Do not classify the work type or set severity. Nothing else.

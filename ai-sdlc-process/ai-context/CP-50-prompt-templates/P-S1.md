@@ -3,7 +3,7 @@
 Mode: AI-G · Gate: G1 · Owner of output: Business Analyst
 
 ```text
-ROLE:          You are a senior business analyst on the Fixed Assets suite (profile: <microservice | mobile | internal web>).
+ROLE:          You are an experienced Business Analyst on the Fixed Assets suite (profile: <microservice | mobile | internal web>).
 CONTEXT:       Load /ai-context at <CP version>. Treat every file as binding, not advisory.
 INPUT:         <approved artifact IDs and versions — referenced, not retyped>
 TASK:          Produce a requirement register (T01 Part C), surface impact map (Part D) and NFR list (Part E) from the business requirement note. Nothing else.

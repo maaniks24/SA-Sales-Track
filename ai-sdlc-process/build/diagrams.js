@@ -313,24 +313,8 @@ D['D9-context-layers'] = () => {
 /* ---------- D10 document lifecycle map (landscape 1800) ---------- */
 D['D10-document-map'] = () => {
   const P = require('./process_data');
-  const rows = [
-    ['T01', 'Requirement Intake and Register', { S0: 'P', S1: 'P', S2: 'U', S6: 'U' }],
-    ['T02', 'SFVD', { S2: 'P', S3: 'U', S4: 'U', S5: 'U', S6: 'U' }],
-    ['T03', 'Solution Design Note', { S3: 'P', S4: 'U', S5: 'U', S6: 'U' }],
-    ['T04', 'CR Impact Analysis (CR only)', { S0: 'P', S1: 'P', S2: 'U', S6: 'U' }],
-    ['T05', 'Issue / SR Triage Form (SR only)', { S0: 'P', S4: 'U', S9: 'P' }],
-    ['T06', 'Root Cause Analysis (defects only)', { S1: 'P', S4: 'U', S6: 'U', S9: 'U' }],
-    ['T07', 'Test Case Specification', { S6: 'P', S7: 'U' }],
-    ['T08', 'Test Data and Seed Specification', { S6: 'P', S7: 'U' }],
-    ['T09', 'PR and Code Review Checklist', { S4: 'P', S5: 'P' }],
-    ['T10', 'Stage Gate Checklists and Sign-off', Object.fromEntries(P.STAGES.map(x => [x.id, 'S']))],
-    ['T11', 'AI Usage Declaration and Assumptions', { S1: 'P', S2: 'P', S3: 'P', S4: 'P', S6: 'P', S7: 'P', S8: 'P' }],
-    ['T12', 'Release Note', { S8: 'P', S9: 'U' }],
-    ['T13', 'Deployment Runbook and Smoke', { S8: 'P', S9: 'P' }],
-    ['T14', 'Context Pack Change Request', 'any:Any stage when a context gap is found; reviewed at every S9'],
-    ['T15', 'Waiver and Deviation Request', 'any:Any stage when a rule cannot be met; approved by the Council'],
-    ['X01', 'Tracker workbook (RTM and registers)', { S0: 'P', S1: 'P', S2: 'P', S6: 'P', S7: 'P', S8: 'P', S9: 'P' }]
-  ];
+  const NAMES = {"T01": "Requirement Intake and Register", "T02": "SFVD", "T03": "Solution Design Note", "T04": "CR Impact Analysis (CR only)", "T05": "Issue / SR Triage Form (SR only)", "T06": "Root Cause Analysis (defects only)", "T07": "Test Case Specification", "T08": "Test Data and Seed Specification", "T09": "PR and Code Review Checklist", "T10": "Stage Gate Checklists and Sign-off", "T11": "AI Usage Declaration and Assumptions", "T12": "Release Note", "T13": "Deployment Runbook and Smoke", "T14": "Context Pack Change Request", "T15": "Waiver and Deviation Request", "X01": "Tracker workbook (RTM and registers)"};
+  const rows = Object.keys(NAMES).map(id => [id, NAMES[id], typeof P.DOC_MAP[id] === 'string' ? 'any:' + P.DOC_MAP[id] : P.DOC_MAP[id]]);
   const W = 1800, LW = 470, HH = 64, RH = 54, CWID = (W - LW - 10) / 10, H = HH + rows.length * RH + 70; let s = '';
   P.STAGES.forEach((st, i) => {
     const x = LW + i * CWID;

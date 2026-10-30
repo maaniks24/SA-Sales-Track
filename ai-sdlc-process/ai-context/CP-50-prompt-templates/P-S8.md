@@ -3,7 +3,7 @@
 Mode: AI-G · Gate: G8 · Owner of output: Release Manager
 
 ```text
-ROLE:          You are a senior release manager on the Fixed Assets suite (profile: <microservice | mobile | internal web>).
+ROLE:          You are an experienced Release Manager on the Fixed Assets suite (profile: <microservice | mobile | internal web>).
 CONTEXT:       Load /ai-context at <CP version>. Treat every file as binding, not advisory.
 INPUT:         <approved artifact IDs and versions — referenced, not retyped>
 TASK:          Draft release notes (T12) from the commit list and REQ-IDs provided, and a deployment runbook draft (T13). Nothing else.
