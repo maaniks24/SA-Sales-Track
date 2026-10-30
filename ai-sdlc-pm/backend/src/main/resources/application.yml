@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: ai-sdlc-pm
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/aisdlc}
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/aisdlc}
+      auto-index-creation: true
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 55MB
+  jackson:
+    default-property-inclusion: non_null
+  http:
+    clients:
+      # outbound calls (Bugzilla)
+      connect-timeout: 10s
+      read-timeout: 20s
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+app:
+  jwt:
+    # 32+ characters. Override with APP_JWT_SECRET in every non-local environment.
+    secret: ${APP_JWT_SECRET:change-me-local-development-secret-0123456789}
+    ttl-hours: 8
+  cors:
+    allowed-origins: ${APP_CORS_ORIGINS:http://localhost:4200}
+  mongo:
+    embedded: ${APP_MONGO_EMBEDDED:false}
+    # empty = in-memory; a path keeps data between restarts (H2 MVStore file)
+    embedded-file: ${APP_MONGO_EMBEDDED_FILE:}
+  seed:
+    enabled: ${APP_SEED:false}
+  public-url: ${APP_PUBLIC_URL:http://localhost:8080}
+  bugzilla:
+    sync-cron: ${APP_BUGZILLA_SYNC_CRON:0 */15 * * * *}
+
+logging:
+  level:
+    com.aisdlc.pm: INFO
+    org.springframework.data.mongodb.core.MongoTemplate: WARN

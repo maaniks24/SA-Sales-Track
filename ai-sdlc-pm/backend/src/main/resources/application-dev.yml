@@ -1,0 +1,10 @@
+# Local development: in-process MongoDB-compatible server with persistent file, demo data.
+app:
+  mongo:
+    embedded: true
+    embedded-file: ${APP_MONGO_EMBEDDED_FILE:./data/aisdlc-dev.mv}
+  seed:
+    enabled: true
+logging:
+  level:
+    com.aisdlc.pm: DEBUG

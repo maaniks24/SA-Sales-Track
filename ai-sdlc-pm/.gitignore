@@ -1,0 +1,9 @@
+# build output
+backend/target/
+backend/logs/
+backend/data/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+*.log
+.DS_Store

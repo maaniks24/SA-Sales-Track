@@ -1,0 +1,2295 @@
+{
+ "version": "PD-AISDLC-01 v1.0",
+ "modes": {
+  "M": {
+   "code": "M",
+   "name": "Manual",
+   "color": "C25E3A",
+   "tint": "F8E6DF",
+   "desc": "Performed and owned entirely by a named person. AI is not used to produce the output."
+  },
+  "AG": {
+   "code": "AI-G",
+   "name": "AI-Generated",
+   "color": "0E7C86",
+   "tint": "DDF0F1",
+   "desc": "AI produces the draft from approved inputs and the Context Pack. A named person must validate it before it is used. It is never a deliverable as generated."
+  },
+  "AA": {
+   "code": "AI-A",
+   "name": "AI-Assisted",
+   "color": "7A5C8E",
+   "tint": "ECE5F1",
+   "desc": "A person produces the output. AI is used only to summarise, search, scan or suggest. The person decides."
+  },
+  "AU": {
+   "code": "AUTO",
+   "name": "Automated",
+   "color": "3E6B7A",
+   "tint": "E1EAEE",
+   "desc": "Deterministic tooling with no AI judgement: Jenkins pipeline, PMD, Sonar, OpenAPI diff, link-check jobs."
+  },
+  "NA": {
+   "code": "AI-X",
+   "name": "AI Not Permitted",
+   "color": "8E2424",
+   "tint": "F3DCDC",
+   "desc": "AI must not be used for this activity under any circumstances."
+  }
+ },
+ "workTypes": {
+  "NF": {
+   "code": "NF",
+   "name": "New Application / New Feature",
+   "short": "New feature",
+   "when": "A capability that does not exist today: a new application, module, screen set, service or integration.",
+   "examples": [
+    "Mobile RFID scanning for physical asset verification",
+    "New lease-asset module",
+    "New integration with the ERP general ledger"
+   ]
+  },
+  "CR": {
+   "code": "CR",
+   "name": "Enhancement / Change Request",
+   "short": "Change request",
+   "when": "A change to behaviour, rules, screens, reports or interfaces that already exist and are baselined.",
+   "examples": [
+    "Pro-rata daily depreciation for mid-year additions",
+    "Add cost-centre filter to the asset register report",
+    "New label template field"
+   ]
+  },
+  "SR": {
+   "code": "SR",
+   "name": "Issue Fix / Service Request",
+   "short": "Issue / SR",
+   "when": "Something is broken (defect), or an operational request that changes data, configuration or access rather than designed behaviour.",
+   "examples": [
+    "Depreciation run posts duplicate entries for transferred assets (defect)",
+    "Correct useful life for 42 assets (data SR)",
+    "Add a role to a user group (access SR)"
+   ]
+  }
+ },
+ "severity": [
+  [
+   "P1 Critical",
+   "Production down, financial misstatement (e.g. wrong depreciation posted to ledger), data loss or security breach",
+   "Immediate; hotfix",
+   "AI-X for RCA and fix. AI-A only to summarise logs.",
+   "Two engineers + Architect",
+   "Emergency change"
+  ],
+  [
+   "P2 High",
+   "Major function impaired; workaround is costly or risky",
+   "Hotfix within SLA",
+   "AI-X for RCA and fix. AI-A only to summarise logs.",
+   "Two engineers",
+   "Hotfix release"
+  ],
+  [
+   "P3 Medium",
+   "Function impaired; acceptable workaround exists",
+   "Next scheduled release",
+   "RCA manual. Fix AI-G permitted after RCA approval.",
+   "Independent reviewer",
+   "Scheduled release"
+  ],
+  [
+   "P4 Low",
+   "Cosmetic or minor inconvenience",
+   "Planned",
+   "RCA manual (short form). Fix AI-G permitted.",
+   "Independent reviewer",
+   "Scheduled release"
+  ]
+ ],
+ "srTypes": [
+  [
+   "Data correction",
+   "Fix asset master records, re-run depreciation for a period, correct location or custodian",
+   "Scripted, reversible, before/after evidence. Scripts that change cost, accumulated depreciation or NBV are AI-X; other scripts AI-G with peer review and dry run."
+  ],
+  [
+   "Configuration change",
+   "Asset class useful life, depreciation rate table, label template, approval limits",
+   "Change record with old and new values; peer review; verification in test first. AI-A only."
+  ],
+  [
+   "Access and role change",
+   "Add or remove users, roles, location access",
+   "Approved by data owner; executed by admin; AI-X."
+  ],
+  [
+   "Report or export tweak",
+   "Column order, filter default, format",
+   "If code changes: re-route as a CR. If configuration only: change record and verification."
+  ],
+  [
+   "Bulk master-data upload",
+   "New asset batch, transfer batch",
+   "Upload template validation; sample verification of 10% or 20 rows, whichever is greater. AI-A for validation summaries."
+  ]
+ ],
+ "techniques": [
+  [
+   "V1",
+   "Source cross-check",
+   "Invented content and omissions",
+   "Map every output item to a source item, and every source item to an output item. Unmapped output is removed; unmapped source is added.",
+   "S0, S1, S2, S6, S8"
+  ],
+  [
+   "V2",
+   "Assumption register review",
+   "Silent guesses presented as fact",
+   "The stage prompt requires AI to list every assumption and open question. The reviewer resolves each one; an unresolved item blocks the gate.",
+   "Every AI-G stage"
+  ],
+  [
+   "V3",
+   "Registry lookup",
+   "Invented identifiers",
+   "Every field, validation ID, error code, class, style class and API named by AI is looked up in the data dictionary or Context Pack registry.",
+   "S2, S3, S4"
+  ],
+  [
+   "V4",
+   "Count reconciliation",
+   "Silent omission",
+   "Compare counts in and out: statements to REQs, dictionary columns to fields, REQs to test cases, approved cases to executed cases, scope to release notes.",
+   "S1, S2, S6, S7, S8"
+  ],
+  [
+   "V5",
+   "Golden-example comparison",
+   "Structure and naming drift",
+   "Compare the output with the CP-99 reference artifact for the same surface: same sections, same patterns, same naming.",
+   "S2, S3, S4"
+  ],
+  [
+   "V6",
+   "Deterministic tool checks",
+   "Standards, quality and security defects",
+   "Lint, PMD, Checkstyle, Sonar, OpenAPI diff, SQL lint, secret scan, ID link check. Objective and blocking.",
+   "S3, S4, S5, S8"
+  ],
+  [
+   "V7",
+   "Independent re-derivation",
+   "Wrong domain logic that looks right",
+   "A domain SME calculates sample values without looking at the AI output (for example WDV for a mid-year addition) and compares.",
+   "S1, S6, S7"
+  ],
+  [
+   "V8",
+   "Execution evidence",
+   "Claims that were never run",
+   "Tests are executed and results attached. Defect fixes show fail-before and pass-after. Automation is proven by a deliberate-fail check.",
+   "S4, S7, S9, SR"
+  ],
+  [
+   "V9",
+   "Explain-back",
+   "Code or design nobody understands",
+   "The author explains any AI-generated element on request. If it cannot be explained it is reworked, however plausible it looks.",
+   "S3, S4, S5"
+  ],
+  [
+   "V10",
+   "Regeneration consistency",
+   "Ambiguous inputs",
+   "For critical artifacts only: regenerate once from the same input. Material differences mean the input is ambiguous; fix the input, not the output.",
+   "S1, S2, S3 (optional)"
+  ]
+ ],
+ "universalChecklist": [
+  "Generated from an approved, versioned input; input ID and version recorded",
+  "Standard stage prompt template used; Context Pack version recorded",
+  "AI Usage Declaration (T11) completed: tool, prompt template, sections generated",
+  "Assumption list present, and every assumption resolved by a person",
+  "Every output item traces to a source item; no orphan content",
+  "No invented identifiers: fields, validation IDs, error codes, APIs, classes, style classes",
+  "Reuse verified: every referenced component exists and is actually used",
+  "Structure follows the template; naming follows CP-11",
+  "Domain rules spot-checked by independent re-derivation where financial values are involved",
+  "No personal data, production data or secrets in the prompt or the output",
+  "Reviewer is not the AI operator; sign-off recorded in T10"
+ ],
+ "idConventions": [
+  [
+   "Module prefix",
+   "FAM asset master · DEP depreciation · LBL labelling and tracking · AUD validation and audit · PLT platform",
+   "DEP"
+  ],
+  [
+   "Requirement",
+   "<MOD>-REQ-<nnn>; a revised requirement keeps its ID with .r<n>",
+   "DEP-REQ-214, DEP-REQ-214.r2"
+  ],
+  [
+   "Change request",
+   "CR-<yyyy>-<nnn>",
+   "CR-2026-031"
+  ],
+  [
+   "Service request",
+   "SR-<yyyy>-<nnnnn>",
+   "SR-2026-00412"
+  ],
+  [
+   "Defect",
+   "BUG-<MOD>-<nnn>",
+   "BUG-DEP-118"
+  ],
+  [
+   "SFVD",
+   "SFVD-<MOD>-<nn> v<major>.<minor>",
+   "SFVD-DEP-07 v2.1"
+  ],
+  [
+   "Test case",
+   "TC-<MOD>-<REQ nnn>-<nn>",
+   "TC-DEP-214-03"
+  ],
+  [
+   "Branch",
+   "<type>/<ID>-<short-description>",
+   "feature/DEP-REQ-214-prorata-wdv"
+  ],
+  [
+   "Commit message",
+   "[<ID>] <imperative summary>",
+   "[DEP-REQ-214] Apply daily pro-rata to WDV additions"
+  ],
+  [
+   "Release",
+   "REL <major>.<minor>.<patch>",
+   "REL 4.7.0"
+  ],
+  [
+   "Context Pack",
+   "CP v<major>.<minor>",
+   "CP v1.3"
+  ],
+  [
+   "Prompt template",
+   "P-<stage> v<n>",
+   "P-S2 v3"
+  ]
+ ],
+ "contextPack": [
+  [
+   "AI-INSTRUCTIONS.md",
+   "Root instruction file loaded by every AI tool; points to /ai-context and states the binding rules",
+   "Architect",
+   "Any change to the rules"
+  ],
+  [
+   "CP-00 product-overview.md",
+   "Modules, surfaces, module prefixes, domain glossary (asset class, SLM, WDV, CWIP, NBV, impairment, label)",
+   "Architect",
+   "New module or term"
+  ],
+  [
+   "CP-10 coding-standards.md",
+   "Layering, exceptions, logging, transactions, audit trail, versioning policy",
+   "Architect",
+   "Standards change"
+  ],
+  [
+   "CP-11 naming-conventions.md",
+   "Packages, classes, methods, tables, columns, API paths, events, branches, commits, test IDs",
+   "Architect",
+   "Standards change"
+  ],
+  [
+   "CP-12 folder-structure.md",
+   "Canonical project skeleton per surface and where each kind of file goes",
+   "Architect",
+   "Structure change"
+  ],
+  [
+   "CP-20 shared-library-index.md",
+   "Every base class, utility, validator and component, with when to use it and the do-not-rewrite list",
+   "Tech Leads",
+   "Any shared code added or retired"
+  ],
+  [
+   "CP-21 ui-style-guide.md",
+   "Design tokens, approved style classes, component catalogue for web and mobile",
+   "UI Lead",
+   "Style change"
+  ],
+  [
+   "CP-22 api-contract-standards.md",
+   "REST conventions, versioning, pagination, error envelope, event naming",
+   "Architect",
+   "Standards change"
+  ],
+  [
+   "CP-23 validation-and-error-registry.md",
+   "Every validation ID and error code with message text; the only source for SFVD and code",
+   "Architect",
+   "Approved registry change"
+  ],
+  [
+   "CP-30 test-standards.md",
+   "Test case template, ID convention, negative-pattern library, automation and locator patterns, device matrix",
+   "QA Lead",
+   "Standards change"
+  ],
+  [
+   "CP-31 test-data-and-seed.md",
+   "Seed data structure, standard asset fixtures, masking rules, data builders",
+   "QA Lead",
+   "Data model change"
+  ],
+  [
+   "CP-40 security-and-compliance.md",
+   "Authorisation model, PII handling, audit log rules, secrets policy, AI data rules",
+   "Security",
+   "Policy change"
+  ],
+  [
+   "CP-50 prompt-templates/",
+   "One approved prompt per stage, S0 to S9",
+   "Architect + QA Lead",
+   "Prompt improvement"
+  ],
+  [
+   "CP-60 review-checklists.md",
+   "The gate checklists from T10, so AI can self-check before a human reviews",
+   "Council",
+   "Checklist change"
+  ],
+  [
+   "CP-99 golden-examples/",
+   "One reference feature per surface (service, mobile, internal web) for AI to imitate",
+   "Tech Leads",
+   "Quarterly refresh"
+  ]
+ ],
+ "principles": [
+  [
+   "AI drafts, a person decides, the gate records.",
+   "AI output is never a deliverable as generated. It becomes one only when a named reviewer accepts it and the gate is recorded in T10."
+  ],
+  [
+   "Context is shared, never personal.",
+   "Standards, structure, shared libraries, style classes, registries and test data live in one versioned Context Pack that every prompt loads."
+  ],
+  [
+   "Nothing moves without an ID.",
+   "Every artifact, commit, test case and defect carries its requirement, CR or SR ID. If it is not linked it does not ship."
+  ],
+  [
+   "Reuse before create.",
+   "A new utility, base method, style class, validation ID or service is justified in writing, or it is not created."
+  ],
+  [
+   "Evidence or it did not happen.",
+   "A gate passes only with a recorded artifact: checklist, scan result, approval. Verbal sign-off is not a gate."
+  ]
+ ],
+ "stages": [
+  {
+   "id": "S0",
+   "gate": "G0",
+   "name": "Intake and Classification",
+   "short": "Intake",
+   "purpose": "Register every new work item, classify it as a New Feature, Change Request or Issue / Service Request, link it to the current baseline, and route it to the correct process path.",
+   "entry": [
+    "Work item raised in Jira by business, support or an internal team",
+    "Requester and business contact identified"
+   ],
+   "inputs": [
+    {
+     "item": "Work item description and attachments",
+     "source": "Jira",
+     "preparedBy": "Requester",
+     "mode": "M"
+    },
+    {
+     "item": "Current baseline: RTM, SFVD versions, release history",
+     "source": "X01 Tracker, document repository",
+     "preparedBy": "Business Analyst",
+     "mode": "M"
+    },
+    {
+     "item": "Logs, screenshots, error references (issues only)",
+     "source": "Support, monitoring tools",
+     "preparedBy": "Support",
+     "mode": "M"
+    },
+    {
+     "item": "Classification rules",
+     "source": "Section 3.4 of this document",
+     "preparedBy": "—",
+     "mode": "M"
+    }
+   ],
+   "activities": [
+    {
+     "activity": "Log the item with requester, module, surface(s) and business priority",
+     "performedBy": "Requester / BA",
+     "mode": "M"
+    },
+    {
+     "activity": "Summarise long descriptions, e-mail threads and logs into a structured intake summary",
+     "performedBy": "BA / Triage Lead",
+     "mode": "AI-A"
+    },
+    {
+     "activity": "Search the RTM and backlog for duplicates and related items",
+     "performedBy": "BA",
+     "mode": "AI-A"
+    },
+    {
+     "activity": "Classify the work type (NF / CR / SR); assign ID and module prefix",
+     "performedBy": "BA (Architect if unclear)",
+     "mode": "M"
+    },
+    {
+     "activity": "For issues: set provisional severity P1 to P4",
+     "performedBy": "Triage Lead",
+     "mode": "M"
+    },
+    {
+     "activity": "Assign the accountable owner and process path; record Gate G0",
+     "performedBy": "Delivery Manager",
+     "mode": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "output": "Classified Jira item: work type, ID, module, severity",
+     "template": "Jira",
+     "mode": "M",
+     "owner": "BA"
+    },
+    {
+     "output": "Intake summary",
+     "template": "T01 Part A (NF/CR) or T05 (SR)",
+     "mode": "AI-A",
+     "owner": "BA / Triage Lead"
+    },
+    {
+     "output": "Duplicate and related-item links",
+     "template": "Jira links",
+     "mode": "AI-A",
+     "owner": "BA"
+    },
+    {
+     "output": "Gate G0 record",
+     "template": "T10",
+     "mode": "M",
+     "owner": "Delivery Manager"
+    }
+   ],
+   "checklist": [
+    "Work type classified using the rules in section 3.4; borderline cases decided by the Architect",
+    "Intake summary reflects the original request: nothing added, nothing lost",
+    "Duplicates and related items confirmed by a person, not accepted from the AI suggestion",
+    "Module prefix, surface(s) and requester recorded",
+    "Severity set for issues (P1 to P4) with a one-line justification",
+    "Accountable owner and process path assigned"
+   ],
+   "gateText": "G0 Intake approved: item classified, ID assigned, owner named, process path selected.",
+   "raci": {
+    "R": "BA / Triage Lead",
+    "A": "Delivery Manager",
+    "C": "Architect",
+    "I": "Requester"
+   },
+   "aiRule": "AI may summarise and search. AI must not classify the work type or set severity.",
+   "techniques": [
+    "V1",
+    "V2"
+   ],
+   "automatedChecks": [
+    "Jira mandatory-field validation (work type, module, requester)"
+   ],
+   "responsibleRole": "BUSINESS_ANALYST",
+   "accountableRole": "DELIVERY_MANAGER",
+   "prerequisites": [],
+   "boardColumn": "INTAKE",
+   "requiredDocs": {
+    "NF": [
+     "T01"
+    ],
+    "CR": [
+     "T04"
+    ],
+    "SR_DEFECT": [
+     "T05"
+    ],
+    "SR_SERVICE": [
+     "T05"
+    ]
+   },
+   "requiredCiChecks": [],
+   "gitEvidence": null,
+   "inputTemplates": []
+  },
+  {
+   "id": "S1",
+   "gate": "G1",
+   "name": "Requirements and Review Points",
+   "short": "Requirements",
+   "purpose": "Turn the business need into an approved, uniquely identified requirement register with acceptance criteria. This register is the root of all traceability.",
+   "entry": [
+    "G0 passed; work type NF, or CR after impact analysis (T04)"
+   ],
+   "inputs": [
+    {
+     "item": "Business requirement note and client review points",
+     "source": "T01 Part B",
+     "preparedBy": "Business / Product Owner",
+     "mode": "M"
+    },
+    {
+     "item": "Current workflow, screen inventory and report list",
+     "source": "Existing SFVD, live product",
+     "preparedBy": "BA",
+     "mode": "M"
+    },
+    {
+     "item": "Domain glossary: asset classes, SLM / WDV, useful life, CWIP, impairment, disposal, label formats",
+     "source": "CP-00",
+     "preparedBy": "Architect",
+     "mode": "M"
+    },
+    {
+     "item": "Integration, validation and non-functional expectations",
+     "source": "Business, Architect",
+     "preparedBy": "BA",
+     "mode": "M"
+    },
+    {
+     "item": "Context Pack sections CP-00, CP-40 and stage prompt P-S1",
+     "source": "/ai-context",
+     "preparedBy": "—",
+     "mode": "M"
+    }
+   ],
+   "activities": [
+    {
+     "activity": "Prepare the business requirement note with review points",
+     "performedBy": "BA with Business",
+     "mode": "M"
+    },
+    {
+     "activity": "Generate the draft register: one ID per requirement, acceptance criteria, impact map, assumptions and open questions",
+     "performedBy": "BA using AI",
+     "mode": "AI-G"
+    },
+    {
+     "activity": "Reconcile the register with the source: every statement mapped, nothing invented",
+     "performedBy": "BA",
+     "mode": "M"
+    },
+    {
+     "activity": "Walk through open questions with the business and record answers",
+     "performedBy": "BA, Product Owner",
+     "mode": "M"
+    },
+    {
+     "activity": "Verify domain and statutory rules (depreciation, capitalisation thresholds, audit retention)",
+     "performedBy": "BA with domain SME",
+     "mode": "M"
+    },
+    {
+     "activity": "Approve the register, freeze REQ-IDs and create RTM rows",
+     "performedBy": "Product Owner",
+     "mode": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "output": "Requirement Register v1.0 with REQ-IDs and acceptance criteria",
+     "template": "T01 Part C",
+     "mode": "AI-G",
+     "owner": "BA"
+    },
+    {
+     "output": "Assumption and open-question log, fully resolved",
+     "template": "T11",
+     "mode": "AI-G",
+     "owner": "BA"
+    },
+    {
+     "output": "Impact map across microservices, mobile and internal web",
+     "template": "T01 Part D",
+     "mode": "AI-G",
+     "owner": "BA"
+    },
+    {
+     "output": "RTM rows created",
+     "template": "X01 RTM sheet",
+     "mode": "M",
+     "owner": "BA"
+    },
+    {
+     "output": "Gate G1 record",
+     "template": "T10",
+     "mode": "M",
+     "owner": "Product Owner"
+    }
+   ],
+   "checklist": [
+    "Every statement in the source note maps to at least one REQ-ID",
+    "No requirement exists without a source statement (nothing invented by AI)",
+    "Each requirement is atomic, testable and has acceptance criteria",
+    "Every AI-declared assumption and open question is answered by the business, not by AI",
+    "Depreciation, capitalisation and statutory rules verified by a domain SME",
+    "Impact on microservices, mobile and internal web identified",
+    "Non-functional needs captured: volume, response time, retention, security",
+    "REQ-IDs follow the convention and are unique in the RTM",
+    "AI Usage Declaration (T11) attached with the Context Pack version"
+   ],
+   "gateText": "G1 Requirements approved: register v1.0 signed by the Product Owner, REQ-IDs frozen, RTM rows created.",
+   "raci": {
+    "R": "Business Analyst",
+    "A": "Product Owner",
+    "C": "Architect, QA Lead",
+    "I": "Development, Release"
+   },
+   "aiRule": "AI may structure, de-duplicate and draft acceptance criteria. AI must not answer its own open questions or decide scope.",
+   "techniques": [
+    "V1",
+    "V2",
+    "V4",
+    "V7"
+   ],
+   "automatedChecks": [
+    "Template completeness check",
+    "REQ-ID format and uniqueness check in the RTM"
+   ],
+   "responsibleRole": "BUSINESS_ANALYST",
+   "accountableRole": "PRODUCT_OWNER",
+   "prerequisites": [
+    "S0"
+   ],
+   "boardColumn": "DEFINE",
+   "requiredDocs": {
+    "NF": [
+     "T01"
+    ],
+    "CR": [
+     "T04"
+    ],
+    "SR_DEFECT": [
+     "T06"
+    ],
+    "SR_SERVICE": []
+   },
+   "requiredCiChecks": [],
+   "gitEvidence": null,
+   "inputTemplates": []
+  },
+  {
+   "id": "S2",
+   "gate": "G2",
+   "name": "SFVD: Screens, Fields, Validations",
+   "short": "SFVD",
+   "purpose": "Specify every screen, field, validation, error message and business flow precisely enough that development and testing work from the same truth.",
+   "entry": [
+    "G1 passed"
+   ],
+   "inputs": [
+    {
+     "item": "Approved Requirement Register",
+     "source": "T01",
+     "preparedBy": "BA",
+     "mode": "M"
+    },
+    {
+     "item": "SFVD template and two approved SFVDs as worked examples",
+     "source": "T02, CP-99",
+     "preparedBy": "Tech Writer",
+     "mode": "M"
+    },
+    {
+     "item": "Data dictionary and entity relationship model",
+     "source": "Architecture repository",
+     "preparedBy": "Architect",
+     "mode": "M"
+    },
+    {
+     "item": "Validation and error-code registry",
+     "source": "CP-23",
+     "preparedBy": "Architect",
+     "mode": "M"
+    },
+    {
+     "item": "UI style guide and component catalogue",
+     "source": "CP-21",
+     "preparedBy": "UI Lead",
+     "mode": "M"
+    },
+    {
+     "item": "Naming conventions",
+     "source": "CP-11",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "Existing SFVD (CR: affected sections only)",
+     "source": "Document repository",
+     "preparedBy": "Tech Writer",
+     "mode": "M"
+    }
+   ],
+   "activities": [
+    {
+     "activity": "Generate the SFVD draft per screen: purpose, actors, flow, field table, validations, error codes, user stories, UI references",
+     "performedBy": "Tech Writer using AI",
+     "mode": "AI-G"
+    },
+    {
+     "activity": "Verify field by field against the data dictionary",
+     "performedBy": "Tech Writer",
+     "mode": "M"
+    },
+    {
+     "activity": "Verify every validation ID and error code exists in the registry; raise a registry change for genuinely new ones",
+     "performedBy": "Tech Writer, Architect",
+     "mode": "M"
+    },
+    {
+     "activity": "Verify reuse call-outs: the named components and validators exist and fit",
+     "performedBy": "Architect",
+     "mode": "M"
+    },
+    {
+     "activity": "Business walkthrough of flows and screens",
+     "performedBy": "BA, Product Owner",
+     "mode": "M"
+    },
+    {
+     "activity": "Baseline the SFVD; update the requirement-screen-field matrix; release to Dev and QA the same day",
+     "performedBy": "Tech Writer",
+     "mode": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "output": "SFVD vX.Y",
+     "template": "T02",
+     "mode": "AI-G",
+     "owner": "Tech Writer"
+    },
+    {
+     "output": "RTM screen and field columns",
+     "template": "X01 RTM sheet",
+     "mode": "M",
+     "owner": "Tech Writer"
+    },
+    {
+     "output": "Registry change requests, if any",
+     "template": "T14",
+     "mode": "M",
+     "owner": "Architect"
+    },
+    {
+     "output": "Gate G2 record",
+     "template": "T10",
+     "mode": "M",
+     "owner": "BA Lead"
+    }
+   ],
+   "checklist": [
+    "Every screen and field maps to a REQ-ID",
+    "Every field matches the data dictionary: name, type, length, mandatory",
+    "Every validation ID and error code exists in the registry; none invented",
+    "Business flows match the approved register, including negative and exception flows",
+    "UI references use only approved style classes and components",
+    "Reuse call-outs verified against the shared library index",
+    "Mobile offline behaviour stated where applicable",
+    "Audit-trail fields and role permissions specified for every screen",
+    "AI assumption list resolved; AI Usage Declaration attached"
+   ],
+   "gateText": "G2 SFVD baselined: matrix updated, document released to Development and QA on the same day.",
+   "raci": {
+    "R": "Tech Writer / BA",
+    "A": "BA Lead",
+    "C": "Architect, QA Lead, Product Owner",
+    "I": "Development, Mobile, Release"
+   },
+   "aiRule": "AI may draft. AI must not create new fields, validation IDs, error codes or style classes.",
+   "techniques": [
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "V5"
+   ],
+   "automatedChecks": [
+    "Template structure check",
+    "Screen-to-REQ-ID link check",
+    "Registry lookup script for validation and error IDs (manual lookup until scripted)"
+   ],
+   "responsibleRole": "TECH_WRITER",
+   "accountableRole": "BUSINESS_ANALYST",
+   "prerequisites": [
+    "S1"
+   ],
+   "boardColumn": "DEFINE",
+   "requiredDocs": {
+    "NF": [
+     "T02"
+    ],
+    "CR": [
+     "T02"
+    ],
+    "SR_DEFECT": [
+     "T02"
+    ],
+    "SR_SERVICE": []
+   },
+   "requiredCiChecks": [],
+   "gitEvidence": null,
+   "inputTemplates": [
+    "T01",
+    "T04"
+   ]
+  },
+  {
+   "id": "S3",
+   "gate": "G3",
+   "name": "Solution Design and Interface Contract",
+   "short": "Design",
+   "purpose": "Decide how the change is built across services and surfaces, and agree the API contract before any code is written.",
+   "entry": [
+    "G2 passed",
+    "For CR and SR: only when the impact analysis or RCA shows a contract, schema or cross-service change"
+   ],
+   "inputs": [
+    {
+     "item": "Finalised SFVD",
+     "source": "T02",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "Service map, bounded contexts and event topics",
+     "source": "Architecture repository, CP-22",
+     "preparedBy": "Architect",
+     "mode": "M"
+    },
+    {
+     "item": "Existing OpenAPI specifications",
+     "source": "Contract repository",
+     "preparedBy": "Tech Lead",
+     "mode": "M"
+    },
+    {
+     "item": "Database schema and migration standard",
+     "source": "CP-10, CP-11",
+     "preparedBy": "DBA",
+     "mode": "M"
+    },
+    {
+     "item": "Shared library index",
+     "source": "CP-20",
+     "preparedBy": "Architect",
+     "mode": "M"
+    },
+    {
+     "item": "Non-functional, security and authorisation model",
+     "source": "CP-40",
+     "preparedBy": "Security",
+     "mode": "M"
+    }
+   ],
+   "activities": [
+    {
+     "activity": "Generate the design draft: service impact, OpenAPI contract, DTO and entity design, sequence diagrams, migration draft, reuse plan",
+     "performedBy": "Tech Lead using AI",
+     "mode": "AI-G"
+    },
+    {
+     "activity": "Run OpenAPI lint and diff, and SQL migration lint",
+     "performedBy": "Jenkins",
+     "mode": "AUTO"
+    },
+    {
+     "activity": "Architecture review: boundaries, reuse, backward compatibility, versioning",
+     "performedBy": "Architect",
+     "mode": "M"
+    },
+    {
+     "activity": "Database review: indexes, migration, rollback",
+     "performedBy": "DBA",
+     "mode": "M"
+    },
+    {
+     "activity": "Security review: authorisation, PII, audit fields",
+     "performedBy": "Security",
+     "mode": "M"
+    },
+    {
+     "activity": "Merge the contract to the contract repository; record the design decision",
+     "performedBy": "Tech Lead",
+     "mode": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "output": "Solution Design Note",
+     "template": "T03",
+     "mode": "AI-G",
+     "owner": "Tech Lead"
+    },
+    {
+     "output": "OpenAPI contract",
+     "template": "Contract repository",
+     "mode": "AI-G",
+     "owner": "Tech Lead"
+    },
+    {
+     "output": "Migration and rollback scripts (draft)",
+     "template": "Code repository",
+     "mode": "AI-G",
+     "owner": "DBA"
+    },
+    {
+     "output": "Architecture decision record",
+     "template": "T03 section 8",
+     "mode": "M",
+     "owner": "Architect"
+    },
+    {
+     "output": "Gate G3 record",
+     "template": "T10",
+     "mode": "M",
+     "owner": "Architect"
+    }
+   ],
+   "checklist": [
+    "No cross-service database access; bounded contexts respected",
+    "Contract backward compatible, or the version bumped with consumers listed",
+    "The capability does not already exist in another service",
+    "Base classes and shared libraries reused; no parallel utilities designed",
+    "Error envelope, pagination and naming follow CP-22",
+    "Mobile offline and synchronisation impact addressed",
+    "Migration reversible; rollback script present and reviewed by the DBA",
+    "Authorisation, audit fields and PII handling reviewed by Security",
+    "Design decision and the alternatives considered are recorded"
+   ],
+   "gateText": "G3 Design approved: contract merged to the contract repository before coding starts.",
+   "raci": {
+    "R": "Tech Lead",
+    "A": "Architect",
+    "C": "DBA, Security, QA Lead",
+    "I": "All development teams"
+   },
+   "aiRule": "AI may draft designs and contracts. AI must not merge a contract or approve a breaking change.",
+   "techniques": [
+    "V2",
+    "V3",
+    "V5",
+    "V6",
+    "V9"
+   ],
+   "automatedChecks": [
+    "OpenAPI lint",
+    "OpenAPI diff against the previous version",
+    "SQL migration lint"
+   ],
+   "responsibleRole": "TECH_LEAD",
+   "accountableRole": "ARCHITECT",
+   "prerequisites": [
+    "S2"
+   ],
+   "boardColumn": "BUILD",
+   "requiredDocs": {
+    "NF": [
+     "T03"
+    ],
+    "CR": [
+     "T03"
+    ],
+    "SR_DEFECT": [
+     "T03"
+    ],
+    "SR_SERVICE": []
+   },
+   "requiredCiChecks": [
+    "OPENAPI_DIFF"
+   ],
+   "gitEvidence": null,
+   "inputTemplates": [
+    "T02"
+   ]
+  },
+  {
+   "id": "S4",
+   "gate": "G4",
+   "name": "Development",
+   "short": "Development",
+   "purpose": "Implement the approved design inside the existing structure, reusing shared code, with unit tests.",
+   "entry": [
+    "G3 passed, or G1 / RCA approval for a change without design impact",
+    "Task carries a REQ-ID or defect ID"
+   ],
+   "inputs": [
+    {
+     "item": "SFVD section, API contract and design note",
+     "source": "T02, T03",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "Coding standards, naming conventions, folder structure",
+     "source": "CP-10, CP-11, CP-12",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "Shared library index and UI style guide",
+     "source": "CP-20, CP-21",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "Golden reference example for the surface",
+     "source": "CP-99",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "REQ-ID or defect ID",
+     "source": "Jira",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "Static analysis rule set",
+     "source": "Jenkins configuration",
+     "preparedBy": "—",
+     "mode": "M"
+    }
+   ],
+   "activities": [
+    {
+     "activity": "Create the branch named with the ID",
+     "performedBy": "Developer",
+     "mode": "M"
+    },
+    {
+     "activity": "Generate code inside the existing structure, unit tests, configuration, i18n keys and migration",
+     "performedBy": "Developer using AI",
+     "mode": "AI-G"
+    },
+    {
+     "activity": "Search the shared library before accepting any new class, utility or CSS",
+     "performedBy": "Developer",
+     "mode": "M"
+    },
+    {
+     "activity": "Run the local build, unit tests, PMD and Sonar scan",
+     "performedBy": "Build tooling",
+     "mode": "AUTO"
+    },
+    {
+     "activity": "Self-review against the T09 checklist; remove unused and alternative code",
+     "performedBy": "Developer",
+     "mode": "M"
+    },
+    {
+     "activity": "Raise a pull request of 400 lines or fewer with T09 and the AI Usage Declaration",
+     "performedBy": "Developer",
+     "mode": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "output": "Source code and unit tests",
+     "template": "Code repository",
+     "mode": "AI-G",
+     "owner": "Developer"
+    },
+    {
+     "output": "Pull request with completed checklist",
+     "template": "T09",
+     "mode": "M",
+     "owner": "Developer"
+    },
+    {
+     "output": "AI Usage Declaration in the pull request",
+     "template": "T11 (short form)",
+     "mode": "M",
+     "owner": "Developer"
+    },
+    {
+     "output": "CI results",
+     "template": "Jenkins",
+     "mode": "AUTO",
+     "owner": "Developer"
+    }
+   ],
+   "checklist": [
+    "Shared library searched; no duplicate utility, validator, base method or CSS created",
+    "Package, class, method and file names follow CP-11",
+    "Layering and folder placement follow CP-12",
+    "No hardcoded values, credentials or environment-specific configuration",
+    "Exception handling, logging and audit trail follow CP-10",
+    "Queries checked for N+1, pagination and index use",
+    "Unit tests cover new logic, including boundary and negative cases",
+    "No unused or commented-out AI-generated alternatives remain",
+    "Branch name and every commit carry the REQ-ID or defect ID",
+    "Pull request 400 lines or fewer, or split; T09 completed",
+    "The developer can explain every line"
+   ],
+   "gateText": "G4 Pull request ready: CI green, checklist complete, AI usage declared.",
+   "raci": {
+    "R": "Developer",
+    "A": "Tech Lead",
+    "C": "Architect",
+    "I": "QA"
+   },
+   "aiRule": "AI may generate code and tests. For P1 and P2 defects AI is not permitted (see section 5.3).",
+   "techniques": [
+    "V3",
+    "V5",
+    "V6",
+    "V8",
+    "V9"
+   ],
+   "automatedChecks": [
+    "Compile and unit tests",
+    "PMD and Checkstyle",
+    "Sonar quality gate",
+    "Coverage on new code",
+    "Duplication",
+    "Secret scan",
+    "Naming lint"
+   ],
+   "responsibleRole": "DEVELOPER",
+   "accountableRole": "TECH_LEAD",
+   "prerequisites": [
+    "S3"
+   ],
+   "boardColumn": "BUILD",
+   "requiredDocs": {},
+   "requiredCiChecks": [
+    "BUILD",
+    "PMD",
+    "SONAR",
+    "COVERAGE",
+    "DUPLICATION",
+    "SECRET_SCAN",
+    "ID_CHECK"
+   ],
+   "gitEvidence": "PR_OPEN",
+   "inputTemplates": [
+    "T02",
+    "T03",
+    "T05",
+    "T06"
+   ]
+  },
+  {
+   "id": "S5",
+   "gate": "G5",
+   "name": "Code Review",
+   "short": "Code review",
+   "purpose": "Independent human verification that the code is correct, consistent, reusable and secure before it is merged.",
+   "entry": [
+    "G4 passed"
+   ],
+   "inputs": [
+    {
+     "item": "Pull request diff and T09 checklist",
+     "source": "Code repository",
+     "preparedBy": "Developer",
+     "mode": "M"
+    },
+    {
+     "item": "SFVD section and API contract",
+     "source": "T02, T03",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "Standards and shared library index",
+     "source": "CP-10 to CP-22",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "Sonar results and contract diff",
+     "source": "Jenkins",
+     "preparedBy": "—",
+     "mode": "AUTO"
+    }
+   ],
+   "activities": [
+    {
+     "activity": "Generate a review aid: diff summary, standards-deviation scan, duplicate detection, missing-test hints",
+     "performedBy": "Reviewer using AI",
+     "mode": "AI-A"
+    },
+    {
+     "activity": "Confirm the CI quality gate result",
+     "performedBy": "Jenkins",
+     "mode": "AUTO"
+    },
+    {
+     "activity": "Review business logic against the SFVD line by line",
+     "performedBy": "Reviewer",
+     "mode": "M"
+    },
+    {
+     "activity": "Check reuse, layering, naming and contract adherence",
+     "performedBy": "Reviewer",
+     "mode": "M"
+    },
+    {
+     "activity": "Security and data-access review (Security consulted for sensitive changes)",
+     "performedBy": "Reviewer",
+     "mode": "M"
+    },
+    {
+     "activity": "Approve or request changes; record the decision",
+     "performedBy": "Reviewer",
+     "mode": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "output": "Approved pull request or review comments",
+     "template": "Code repository",
+     "mode": "M",
+     "owner": "Reviewer"
+    },
+    {
+     "output": "Merge with REQ-ID in the message",
+     "template": "Code repository",
+     "mode": "M",
+     "owner": "Reviewer"
+    },
+    {
+     "output": "Gate G5 record (pull request approval)",
+     "template": "Code repository / T10",
+     "mode": "M",
+     "owner": "Tech Lead"
+    }
+   ],
+   "checklist": [
+    "Reviewer is not the developer who ran the AI prompt",
+    "Business logic matches the SFVD and acceptance criteria",
+    "Reuse opportunities enforced, not merely noted",
+    "Contract adherence and backward compatibility confirmed",
+    "Security, authorisation, input validation and PII handling checked",
+    "Tests are meaningful: they assert behaviour and include negative cases",
+    "Sonar: zero blocker and critical issues; duplication and coverage within thresholds",
+    "All review comments resolved; nothing the reviewer cannot explain is merged"
+   ],
+   "gateText": "G5 Code approved and merged by an independent reviewer.",
+   "raci": {
+    "R": "Reviewer (peer or Tech Lead)",
+    "A": "Tech Lead",
+    "C": "Architect, Security",
+    "I": "QA, Product Owner"
+   },
+   "aiRule": "AI may assist the reviewer. AI never approves or merges.",
+   "techniques": [
+    "V6",
+    "V9"
+   ],
+   "automatedChecks": [
+    "Sonar quality gate",
+    "Duplication and coverage thresholds",
+    "OpenAPI diff",
+    "Pull request size check"
+   ],
+   "responsibleRole": "REVIEWER",
+   "accountableRole": "TECH_LEAD",
+   "prerequisites": [
+    "S4"
+   ],
+   "boardColumn": "BUILD",
+   "requiredDocs": {},
+   "requiredCiChecks": [
+    "SONAR",
+    "DUPLICATION",
+    "OPENAPI_DIFF"
+   ],
+   "gitEvidence": "PR_MERGED",
+   "inputTemplates": [
+    "T02",
+    "T03"
+   ]
+  },
+  {
+   "id": "S6",
+   "gate": "G6",
+   "name": "Test Design",
+   "short": "Test design",
+   "purpose": "Derive complete test cases and test data from the baselined SFVD and contract, in parallel with design and development.",
+   "entry": [
+    "G2 passed (and G3 for contract-based cases)"
+   ],
+   "inputs": [
+    {
+     "item": "Finalised SFVD and API contract",
+     "source": "T02, contract repository",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "Test case template and ID convention",
+     "source": "T07, CP-30",
+     "preparedBy": "QA Lead",
+     "mode": "M"
+    },
+    {
+     "item": "Test data and seed data specification",
+     "source": "T08, CP-31",
+     "preparedBy": "QA Lead",
+     "mode": "M"
+    },
+    {
+     "item": "Boundary and negative scenario pattern library",
+     "source": "CP-30",
+     "preparedBy": "QA Lead",
+     "mode": "M"
+    },
+    {
+     "item": "Index of the existing regression suite",
+     "source": "Test management tool",
+     "preparedBy": "QA",
+     "mode": "M"
+    },
+    {
+     "item": "Device, browser and role matrix",
+     "source": "CP-30",
+     "preparedBy": "QA Lead",
+     "mode": "M"
+    }
+   ],
+   "activities": [
+    {
+     "activity": "Generate test cases: functional, validation, UI, flow, integration, cross-surface; positive and negative; expected results; REQ mapping; automation flag",
+     "performedBy": "QA Engineer using AI",
+     "mode": "AI-G"
+    },
+    {
+     "activity": "Generate test data requirements mapped to the seed structure",
+     "performedBy": "QA Engineer using AI",
+     "mode": "AI-G"
+    },
+    {
+     "activity": "Coverage reconciliation: every REQ-ID and every field validation covered",
+     "performedBy": "QA Engineer",
+     "mode": "M"
+    },
+    {
+     "activity": "Remove duplicates of existing regression cases",
+     "performedBy": "QA Engineer",
+     "mode": "M"
+    },
+    {
+     "activity": "Verify expected results against the SFVD; SME re-calculates financial values",
+     "performedBy": "QA Lead, domain SME",
+     "mode": "M"
+    },
+    {
+     "activity": "Approve the suite; baseline it in the test management tool; update the RTM",
+     "performedBy": "QA Lead",
+     "mode": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "output": "Test Case Specification",
+     "template": "T07",
+     "mode": "AI-G",
+     "owner": "QA Engineer"
+    },
+    {
+     "output": "Test Data Specification",
+     "template": "T08",
+     "mode": "AI-G",
+     "owner": "QA Engineer"
+    },
+    {
+     "output": "RTM test columns",
+     "template": "X01 RTM sheet",
+     "mode": "M",
+     "owner": "QA Engineer"
+    },
+    {
+     "output": "Gate G6 record",
+     "template": "T10",
+     "mode": "M",
+     "owner": "QA Lead"
+    }
+   ],
+   "checklist": [
+    "Every REQ-ID has at least one positive and one negative case",
+    "Every field validation in the SFVD has a test case",
+    "Expected results traced to SFVD text, not inferred",
+    "Depreciation, label and audit expected values independently re-calculated by the SME",
+    "No duplicate of an existing regression case",
+    "Test data follows the seed structure; personal and financial data masked",
+    "Priority, regression and automation tags set",
+    "Device, browser and role coverage matches the matrix"
+   ],
+   "gateText": "G6 Test suite approved and baselined in the test management tool.",
+   "raci": {
+    "R": "QA Engineer",
+    "A": "QA Lead",
+    "C": "BA, Developer",
+    "I": "Product Owner, Release"
+   },
+   "aiRule": "AI may draft cases and data. AI must not decide expected results for financial calculations without SME verification.",
+   "techniques": [
+    "V1",
+    "V2",
+    "V4",
+    "V7"
+   ],
+   "automatedChecks": [
+    "RTM coverage check: REQ-IDs without a test case are flagged",
+    "Duplicate test title check"
+   ],
+   "responsibleRole": "QA_ENGINEER",
+   "accountableRole": "QA_LEAD",
+   "prerequisites": [
+    "S2"
+   ],
+   "boardColumn": "TEST",
+   "requiredDocs": {
+    "NF": [
+     "T07",
+     "T08"
+    ],
+    "CR": [
+     "T07",
+     "T08"
+    ],
+    "SR_DEFECT": [
+     "T07"
+    ],
+    "SR_SERVICE": []
+   },
+   "requiredCiChecks": [],
+   "gitEvidence": null,
+   "inputTemplates": [
+    "T01",
+    "T02",
+    "T03",
+    "T04",
+    "T06"
+   ]
+  },
+  {
+   "id": "S7",
+   "gate": "G7",
+   "name": "Test Execution and Automation",
+   "short": "Test execution",
+   "purpose": "Execute the approved suite, automate the agreed cases, and prove that nothing was silently dropped.",
+   "entry": [
+    "G5 and G6 passed",
+    "Build deployed to the test environment"
+   ],
+   "inputs": [
+    {
+     "item": "Approved test suite",
+     "source": "Test management tool",
+     "preparedBy": "QA Lead",
+     "mode": "M"
+    },
+    {
+     "item": "Seed data script",
+     "source": "CP-31 / T08",
+     "preparedBy": "QA",
+     "mode": "M"
+    },
+    {
+     "item": "Environment configuration and test accounts",
+     "source": "Environment matrix",
+     "preparedBy": "DevOps",
+     "mode": "M"
+    },
+    {
+     "item": "Automation framework patterns and locator standard",
+     "source": "CP-30",
+     "preparedBy": "Automation Lead",
+     "mode": "M"
+    },
+    {
+     "item": "Existing regression pack",
+     "source": "Automation repository",
+     "preparedBy": "QA",
+     "mode": "M"
+    }
+   ],
+   "activities": [
+    {
+     "activity": "Load seed data",
+     "performedBy": "Seed script",
+     "mode": "AUTO"
+    },
+    {
+     "activity": "Generate automation scripts: page objects, locators, data-driven steps",
+     "performedBy": "Automation Engineer using AI",
+     "mode": "AI-G"
+    },
+    {
+     "activity": "Review scripts one-to-one against approved cases; verify assertions",
+     "performedBy": "Automation Engineer, QA Lead",
+     "mode": "M"
+    },
+    {
+     "activity": "Execute manual and automated tests",
+     "performedBy": "QA",
+     "mode": "M"
+    },
+    {
+     "activity": "Draft defect reports from failures",
+     "performedBy": "QA using AI",
+     "mode": "AI-A"
+    },
+    {
+     "activity": "Run the automation parity check; record deferrals with reasons",
+     "performedBy": "QA Lead",
+     "mode": "AUTO"
+    }
+   ],
+   "outputs": [
+    {
+     "output": "Execution report",
+     "template": "Test management tool",
+     "mode": "M",
+     "owner": "QA"
+    },
+    {
+     "output": "Automated scripts added to the regression pack",
+     "template": "Automation repository",
+     "mode": "AI-G",
+     "owner": "Automation Engineer"
+    },
+    {
+     "output": "Defects linked to REQ-IDs",
+     "template": "Jira",
+     "mode": "AI-A",
+     "owner": "QA"
+    },
+    {
+     "output": "Automation parity report",
+     "template": "X01 / Jenkins",
+     "mode": "AUTO",
+     "owner": "QA Lead"
+    },
+    {
+     "output": "Gate G7 record",
+     "template": "T10",
+     "mode": "M",
+     "owner": "QA Lead"
+    }
+   ],
+   "checklist": [
+    "Every automated script maps one-to-one to an approved case; no steps dropped",
+    "Assertions verify expected results, proven by a deliberate-fail check on a sample",
+    "No hardcoded data, fixed waits or environment coupling",
+    "Scripts are independent and repeatable in any order",
+    "Parity: approved = executed + automated + formally deferred",
+    "Every failure has a defect linked to its REQ-ID",
+    "Deferred cases have a reason, an owner and a target release"
+   ],
+   "gateText": "G7 Test exit: parity 100%, no open P1 or P2 defects, evidence attached.",
+   "raci": {
+    "R": "Automation Engineer / QA",
+    "A": "QA Lead",
+    "C": "Developer",
+    "I": "Product Owner, Release"
+   },
+   "aiRule": "AI may draft scripts and defect descriptions. AI must not mark a test as passed.",
+   "techniques": [
+    "V4",
+    "V8"
+   ],
+   "automatedChecks": [
+    "Parity check: approved = executed + automated + formally deferred",
+    "Flaky test detection by re-run",
+    "RTM test-status update"
+   ],
+   "responsibleRole": "QA_ENGINEER",
+   "accountableRole": "QA_LEAD",
+   "prerequisites": [
+    "S5",
+    "S6"
+   ],
+   "boardColumn": "TEST",
+   "requiredDocs": {},
+   "requiredCiChecks": [
+    "PARITY"
+   ],
+   "gitEvidence": null,
+   "inputTemplates": [
+    "T07",
+    "T08"
+   ]
+  },
+  {
+   "id": "S8",
+   "gate": "G8",
+   "name": "Build and Release",
+   "short": "Release",
+   "purpose": "Produce a signed, immutable and traceable release package.",
+   "entry": [
+    "G7 passed"
+   ],
+   "inputs": [
+    {
+     "item": "Merged code and the release scope from Jira",
+     "source": "Jira, code repository",
+     "preparedBy": "Release Manager",
+     "mode": "M"
+    },
+    {
+     "item": "Version and branching policy",
+     "source": "CP-10",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "Release note template",
+     "source": "T12",
+     "preparedBy": "—",
+     "mode": "M"
+    },
+    {
+     "item": "Environment configuration matrix",
+     "source": "DevOps",
+     "preparedBy": "DevOps",
+     "mode": "M"
+    },
+    {
+     "item": "Migration and rollback scripts",
+     "source": "Code repository",
+     "preparedBy": "DBA",
+     "mode": "M"
+    },
+    {
+     "item": "RTM snapshot",
+     "source": "X01",
+     "preparedBy": "QA Lead",
+     "mode": "AUTO"
+    }
+   ],
+   "activities": [
+    {
+     "activity": "Build the immutable artifact with a version tag",
+     "performedBy": "Jenkins",
+     "mode": "AUTO"
+    },
+    {
+     "activity": "Generate release notes from commits and REQ-IDs, config diff summary and rollback steps",
+     "performedBy": "Release Manager using AI",
+     "mode": "AI-G"
+    },
+    {
+     "activity": "Reconcile release notes with the RTM and Jira scope",
+     "performedBy": "Release Manager",
+     "mode": "M"
+    },
+    {
+     "activity": "Verify configuration differences for each environment",
+     "performedBy": "DevOps",
+     "mode": "M"
+    },
+    {
+     "activity": "Migration dry run on a production-like copy",
+     "performedBy": "DBA / DevOps",
+     "mode": "M"
+    },
+    {
+     "activity": "Record release approval",
+     "performedBy": "Delivery Manager",
+     "mode": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "output": "Release package (immutable, checksummed)",
+     "template": "Artifact repository",
+     "mode": "AUTO",
+     "owner": "DevOps"
+    },
+    {
+     "output": "Release Note",
+     "template": "T12",
+     "mode": "AI-G",
+     "owner": "Release Manager"
+    },
+    {
+     "output": "Deployment Runbook (draft)",
+     "template": "T13",
+     "mode": "AI-G",
+     "owner": "DevOps"
+    },
+    {
+     "output": "Gate G8 record",
+     "template": "T10",
+     "mode": "M",
+     "owner": "Delivery Manager"
+    }
+   ],
+   "checklist": [
+    "Version number unique and follows policy; artifact checksum recorded",
+    "Every release-note line traces to a merged pull request and REQ-ID; nothing omitted",
+    "Known issues and deferred cases listed",
+    "Configuration differences verified for each environment; no secrets in notes",
+    "Migration dry run passed; rollback tested",
+    "Open defects accepted or deferred in writing",
+    "Release approval recorded before promotion"
+   ],
+   "gateText": "G8 Release approved: signed package, RTM snapshot attached.",
+   "raci": {
+    "R": "Release Manager",
+    "A": "Delivery Manager",
+    "C": "DevOps, Architect, QA Lead",
+    "I": "All teams"
+   },
+   "aiRule": "AI may draft notes and runbooks. AI must not trigger a build promotion.",
+   "techniques": [
+    "V1",
+    "V4",
+    "V6"
+   ],
+   "automatedChecks": [
+    "Version uniqueness",
+    "Artifact checksum",
+    "RTM link check: every REQ in scope has passed tests"
+   ],
+   "responsibleRole": "RELEASE_MANAGER",
+   "accountableRole": "DELIVERY_MANAGER",
+   "prerequisites": [
+    "S7"
+   ],
+   "boardColumn": "RELEASE",
+   "requiredDocs": {
+    "NF": [
+     "T12",
+     "T13"
+    ],
+    "CR": [
+     "T12",
+     "T13"
+    ],
+    "SR_DEFECT": [
+     "T12",
+     "T13"
+    ],
+    "SR_SERVICE": []
+   },
+   "requiredCiChecks": [
+    "RTM_LINK",
+    "PARITY"
+   ],
+   "gitEvidence": null,
+   "inputTemplates": []
+  },
+  {
+   "id": "S9",
+   "gate": "G9",
+   "name": "Deploy, Verify and Close",
+   "short": "Deploy",
+   "purpose": "Deploy safely, prove it works in production, and close the loop with a frozen audit baseline.",
+   "entry": [
+    "G8 passed",
+    "Deployment window approved"
+   ],
+   "inputs": [
+    {
+     "item": "Signed release package",
+     "source": "Artifact repository",
+     "preparedBy": "DevOps",
+     "mode": "M"
+    },
+    {
+     "item": "Deployment runbook and smoke checklist",
+     "source": "T13",
+     "preparedBy": "DevOps",
+     "mode": "M"
+    },
+    {
+     "item": "Backup confirmation and rollback plan",
+     "source": "T13",
+     "preparedBy": "DBA / DevOps",
+     "mode": "M"
+    },
+    {
+     "item": "Monitoring dashboards and alert thresholds",
+     "source": "Monitoring tools",
+     "preparedBy": "DevOps",
+     "mode": "M"
+    }
+   ],
+   "activities": [
+    {
+     "activity": "Pre-deployment validation and backup confirmation",
+     "performedBy": "DevOps",
+     "mode": "M"
+    },
+    {
+     "activity": "Deploy through the Jenkins pipeline following the runbook",
+     "performedBy": "Jenkins",
+     "mode": "AUTO"
+    },
+    {
+     "activity": "Execute the smoke pack",
+     "performedBy": "QA",
+     "mode": "M"
+    },
+    {
+     "activity": "Summarise post-deployment logs and metrics for anomalies",
+     "performedBy": "DevOps using AI",
+     "mode": "AI-A"
+    },
+    {
+     "activity": "Monitor for the agreed window; decide go or rollback",
+     "performedBy": "DevOps, Delivery Manager",
+     "mode": "M"
+    },
+    {
+     "activity": "Business sign-off; freeze the RTM; close Jira items; raise context-gap changes",
+     "performedBy": "PO, BA, Architect",
+     "mode": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "output": "Deployment record and smoke results",
+     "template": "T13",
+     "mode": "M",
+     "owner": "DevOps / QA"
+    },
+    {
+     "output": "Monitoring summary",
+     "template": "T13",
+     "mode": "AI-A",
+     "owner": "DevOps"
+    },
+    {
+     "output": "Business sign-off",
+     "template": "T10",
+     "mode": "M",
+     "owner": "Product Owner"
+    },
+    {
+     "output": "Frozen RTM for the release",
+     "template": "X01",
+     "mode": "M",
+     "owner": "BA"
+    },
+    {
+     "output": "Context Pack change requests",
+     "template": "T14",
+     "mode": "M",
+     "owner": "Architect"
+    }
+   ],
+   "checklist": [
+    "Backup confirmed by a named person before deployment",
+    "Deployment executed from the runbook; deviations recorded",
+    "Smoke pack 100% passed, executed by QA rather than the deployer",
+    "Monitoring window completed with no unexplained errors",
+    "Rollback decision owner named before deployment started",
+    "Business sign-off recorded",
+    "RTM frozen and versioned with the release",
+    "Lessons learned captured; context gaps raised on T14"
+   ],
+   "gateText": "G9 Release closed: smoke passed, monitoring clean, RTM frozen.",
+   "raci": {
+    "R": "DevOps",
+    "A": "Delivery Manager",
+    "C": "QA Lead, Product Owner, Architect",
+    "I": "All teams"
+   },
+   "aiRule": "AI may summarise logs. AI must not execute deployment or rollback actions.",
+   "techniques": [
+    "V8"
+   ],
+   "automatedChecks": [
+    "Pipeline deployment log",
+    "Health checks",
+    "Alerting"
+   ],
+   "responsibleRole": "DEVOPS",
+   "accountableRole": "DELIVERY_MANAGER",
+   "prerequisites": [
+    "S8"
+   ],
+   "boardColumn": "RELEASE",
+   "requiredDocs": {
+    "NF": [
+     "T13"
+    ],
+    "CR": [
+     "T13"
+    ],
+    "SR_DEFECT": [
+     "T13"
+    ],
+    "SR_SERVICE": [
+     "T05"
+    ]
+   },
+   "requiredCiChecks": [
+    "SMOKE"
+   ],
+   "gitEvidence": null,
+   "inputTemplates": [
+    "T06",
+    "T12"
+   ]
+  }
+ ],
+ "checklistOverrides": {
+  "CR": {
+   "S1": [
+    "Every impacted REQ-ID confirmed by the Architect, not only suggested by AI",
+    "Contract and schema impact assessed; Minor or Major classification justified",
+    "Mobile N-1 compatibility considered",
+    "Regression selection confirmed by the QA Lead and includes the critical-path pack",
+    "Financial rule changes: prospective or retrospective decided; Finance approval recorded",
+    "Effort and schedule agreed with the Product Owner"
+   ]
+  },
+  "SR_DEFECT": {
+   "S0": [
+    "Issue reproduced, or request validated, before any change",
+    "Classification and severity justified; re-routed if code or new behaviour is needed",
+    "Script is reversible and the rollback script was tested",
+    "Scripts changing financial values were written manually and reviewed by two people",
+    "Dry run on a production-like copy; before and after evidence attached",
+    "Executed by an authorised admin under a change record",
+    "Requester verified the outcome"
+   ],
+   "S1": [
+    "Root cause written by an engineer, not generated by AI",
+    "The five whys reach a process cause, not only a code cause",
+    "The gate that missed the defect is named, with evidence",
+    "Failing test committed before the fix",
+    "Preventive action for the missed gate assigned with an owner and date",
+    "Data impact assessed; correction raised as an SR if needed",
+    "P1 / P2: reviewed by the Architect"
+   ]
+  },
+  "SR_SERVICE": {
+   "S0": [
+    "Issue reproduced, or request validated, before any change",
+    "Classification and severity justified; re-routed if code or new behaviour is needed",
+    "Script is reversible and the rollback script was tested",
+    "Scripts changing financial values were written manually and reviewed by two people",
+    "Dry run on a production-like copy; before and after evidence attached",
+    "Executed by an authorised admin under a change record",
+    "Requester verified the outcome"
+   ],
+   "S9": [
+    "Issue reproduced, or request validated, before any change",
+    "Classification and severity justified; re-routed if code or new behaviour is needed",
+    "Script is reversible and the rollback script was tested",
+    "Scripts changing financial values were written manually and reviewed by two people",
+    "Dry run on a production-like copy; before and after evidence attached",
+    "Executed by an authorised admin under a change record",
+    "Requester verified the outcome"
+   ]
+  }
+ },
+ "applicability": {
+  "NF": {
+   "S0": "FULL",
+   "S1": "FULL",
+   "S2": "FULL",
+   "S3": "FULL",
+   "S4": "FULL",
+   "S5": "FULL",
+   "S6": "FULL",
+   "S7": "FULL",
+   "S8": "FULL",
+   "S9": "FULL"
+  },
+  "CR": {
+   "S0": "FULL",
+   "S1": "DELTA",
+   "S2": "DELTA",
+   "S3": "CONDITIONAL",
+   "S4": "FULL",
+   "S5": "FULL",
+   "S6": "DELTA",
+   "S7": "DELTA",
+   "S8": "FULL",
+   "S9": "FULL"
+  },
+  "SR_DEFECT": {
+   "S0": "FULL",
+   "S1": "FULL",
+   "S2": "SKIP",
+   "S3": "SKIP",
+   "S4": "FULL",
+   "S5": "FULL",
+   "S6": "LIGHT",
+   "S7": "LIGHT",
+   "S8": "FULL",
+   "S9": "FULL"
+  },
+  "SR_SERVICE": {
+   "S0": "FULL",
+   "S1": "SKIP",
+   "S2": "SKIP",
+   "S3": "SKIP",
+   "S4": "FULL",
+   "S5": "FULL",
+   "S6": "SKIP",
+   "S7": "LIGHT",
+   "S8": "SKIP",
+   "S9": "FULL"
+  }
+ },
+ "templates": [
+  {
+   "id": "T01",
+   "name": "Requirement Intake and Register",
+   "purpose": "Captures the request, review points, the requirement register with REQ-IDs and acceptance criteria, and the surface impact map",
+   "stage": "S0, S1",
+   "workTypes": "NF, CR",
+   "owner": "Business Analyst",
+   "mode": "AI-G draft, completed and signed manually"
+  },
+  {
+   "id": "T02",
+   "name": "SFVD (Screens, Fields, Validations, Data)",
+   "purpose": "Screens, fields, validations, error codes, flows, user stories and UI references",
+   "stage": "S2",
+   "workTypes": "NF, CR (delta), SR (if behaviour changes)",
+   "owner": "Tech Writer",
+   "mode": "AI-G draft, verified manually"
+  },
+  {
+   "id": "T03",
+   "name": "Solution Design Note",
+   "purpose": "Service impact, API contract summary, data design, migration, NFRs and the architecture decision record",
+   "stage": "S3",
+   "workTypes": "NF, CR major",
+   "owner": "Tech Lead",
+   "mode": "AI-G draft, reviewed by Architect"
+  },
+  {
+   "id": "T04",
+   "name": "Change Request Impact Analysis",
+   "purpose": "Impact on REQs, documents, services, contracts, data, tests and effort; CR approval",
+   "stage": "S0, S1 (CR)",
+   "workTypes": "CR",
+   "owner": "Architect / BA",
+   "mode": "AI-A (RTM and code search); decisions manual"
+  },
+  {
+   "id": "T05",
+   "name": "Issue and Service Request Triage Form",
+   "purpose": "Reproduction, classification, severity, and for SRs the change details and verification",
+   "stage": "S0 (SR)",
+   "workTypes": "SR",
+   "owner": "Triage Lead",
+   "mode": "Manual (AI-A summary of logs)"
+  },
+  {
+   "id": "T06",
+   "name": "Root Cause Analysis",
+   "purpose": "Root cause, why it was not caught, which gate missed it, corrective and preventive actions",
+   "stage": "SR defect path",
+   "workTypes": "SR",
+   "owner": "Developer + Tech Lead",
+   "mode": "Manual only (AI-X)"
+  },
+  {
+   "id": "T07",
+   "name": "Test Case Specification",
+   "purpose": "Test cases with IDs, steps, expected results, REQ mapping and tags",
+   "stage": "S6",
+   "workTypes": "All",
+   "owner": "QA Engineer",
+   "mode": "AI-G draft, verified manually"
+  },
+  {
+   "id": "T08",
+   "name": "Test Data and Seed Data Specification",
+   "purpose": "Seed structure, standard fixtures, masking rules and data per case",
+   "stage": "S6, S7",
+   "workTypes": "All",
+   "owner": "QA Engineer",
+   "mode": "AI-G draft, verified manually"
+  },
+  {
+   "id": "T09",
+   "name": "Pull Request and Code Review Checklist",
+   "purpose": "Developer self-review and independent reviewer checklist",
+   "stage": "S4, S5",
+   "workTypes": "All code changes",
+   "owner": "Developer, Reviewer",
+   "mode": "Manual"
+  },
+  {
+   "id": "T10",
+   "name": "Stage Gate Checklists and Sign-off",
+   "purpose": "One checklist and sign-off block per gate, G0 to G9, with the four verification levels",
+   "stage": "All",
+   "workTypes": "All",
+   "owner": "Gate owner",
+   "mode": "Manual"
+  },
+  {
+   "id": "T11",
+   "name": "AI Usage Declaration and Assumption Register",
+   "purpose": "Tool, prompt template, Context Pack version, sections generated, assumptions and how each was resolved",
+   "stage": "Every AI-G step",
+   "workTypes": "All",
+   "owner": "AI operator",
+   "mode": "Manual"
+  },
+  {
+   "id": "T12",
+   "name": "Release Note",
+   "purpose": "Version, scope by REQ-ID, known issues, configuration changes, deferred items",
+   "stage": "S8",
+   "workTypes": "All",
+   "owner": "Release Manager",
+   "mode": "AI-G draft, reconciled manually"
+  },
+  {
+   "id": "T13",
+   "name": "Deployment Runbook and Smoke Checklist",
+   "purpose": "Pre-checks, steps, smoke tests, monitoring window, rollback",
+   "stage": "S8, S9",
+   "workTypes": "All",
+   "owner": "DevOps",
+   "mode": "AI-G draft, executed manually"
+  },
+  {
+   "id": "T14",
+   "name": "Context Pack Change Request",
+   "purpose": "Proposal to add or change a Context Pack file, with reason and approval",
+   "stage": "Any",
+   "workTypes": "All",
+   "owner": "Anyone; approved by Council",
+   "mode": "Manual"
+  },
+  {
+   "id": "T15",
+   "name": "Waiver and Deviation Request",
+   "purpose": "Request to bypass a rule or gate, with risk, owner and expiry",
+   "stage": "Any",
+   "workTypes": "All",
+   "owner": "Requester; approved by Council",
+   "mode": "Manual"
+  },
+  {
+   "id": "X01",
+   "name": "AI SDLC Tracker Workbook (Excel)",
+   "purpose": "RTM, gate log, AI usage log, waiver register, Context Pack version log, defect-to-gate analysis",
+   "stage": "All",
+   "workTypes": "All",
+   "owner": "BA, QA Lead, Council",
+   "mode": "Manual, with automated feeds where available"
+  }
+ ],
+ "docMap": {
+  "T01": {
+   "S0": "P",
+   "S1": "P",
+   "S2": "U",
+   "S6": "U"
+  },
+  "T02": {
+   "S2": "P",
+   "S3": "U",
+   "S4": "U",
+   "S5": "U",
+   "S6": "U"
+  },
+  "T03": {
+   "S3": "P",
+   "S4": "U",
+   "S5": "U",
+   "S6": "U"
+  },
+  "T04": {
+   "S0": "P",
+   "S1": "P",
+   "S2": "U",
+   "S6": "U"
+  },
+  "T05": {
+   "S0": "P",
+   "S4": "U",
+   "S9": "P"
+  },
+  "T06": {
+   "S1": "P",
+   "S4": "U",
+   "S6": "U",
+   "S9": "U"
+  },
+  "T07": {
+   "S6": "P",
+   "S7": "U"
+  },
+  "T08": {
+   "S6": "P",
+   "S7": "U"
+  },
+  "T09": {
+   "S4": "P",
+   "S5": "P"
+  },
+  "T10": {
+   "S0": "S",
+   "S1": "S",
+   "S2": "S",
+   "S3": "S",
+   "S4": "S",
+   "S5": "S",
+   "S6": "S",
+   "S7": "S",
+   "S8": "S",
+   "S9": "S"
+  },
+  "T11": {
+   "S1": "P",
+   "S2": "P",
+   "S3": "P",
+   "S4": "P",
+   "S6": "P",
+   "S7": "P",
+   "S8": "P"
+  },
+  "T12": {
+   "S8": "P",
+   "S9": "U"
+  },
+  "T13": {
+   "S8": "P",
+   "S9": "P"
+  },
+  "T14": "Any stage when a context gap is found; reviewed at every S9",
+  "T15": "Any stage when a rule cannot be met; approved by the Council",
+  "X01": {
+   "S0": "P",
+   "S1": "P",
+   "S2": "P",
+   "S6": "P",
+   "S7": "P",
+   "S8": "P",
+   "S9": "P"
+  }
+ }
+}

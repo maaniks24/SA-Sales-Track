@@ -1,0 +1,10 @@
+app:
+  mongo:
+    embedded: true
+    embedded-file: ""
+  seed:
+    enabled: false
+logging:
+  level:
+    root: WARN
+    com.aisdlc.pm: INFO
