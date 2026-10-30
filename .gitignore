@@ -1,2 +1,3 @@
 node_modules/
 *.jpg
+ai-sdlc-process/build/build_impl_deck.js
